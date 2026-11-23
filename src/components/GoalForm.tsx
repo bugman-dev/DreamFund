@@ -95,12 +95,15 @@ export function GoalForm({
       <ScreenHeader title={title} onBack={() => router.back()} />
       <View style={styles.imageWrap}>
         <GoalImage uri={imageUri} style={styles.preview} iconSize={36} />
-        {uploaded ? null : (
-          <Pressable accessibilityRole="button" accessibilityLabel={text('goal.uploadA11y')} onPress={upload} style={styles.upload}>
-            <ImagePlus color={colors.forest} size={18} />
-            <Text style={styles.uploadText}>{text('goal.upload')}</Text>
-          </Pressable>
-        )}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={text(uploaded ? 'goal.changeImageA11y' : 'goal.uploadA11y')}
+          onPress={upload}
+          style={styles.upload}
+        >
+          <ImagePlus color={colors.forest} size={18} />
+          <Text style={styles.uploadText}>{text(uploaded ? 'goal.changeImage' : 'goal.upload')}</Text>
+        </Pressable>
       </View>
       <View style={styles.form}>
         <Field label={text('goal.name')}>

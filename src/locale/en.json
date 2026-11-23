@@ -73,6 +73,8 @@
   "goal.targetDate": "Target Date (Optional)",
   "goal.upload": "Upload",
   "goal.uploadA11y": "Upload image",
+  "goal.changeImage": "Change",
+  "goal.changeImageA11y": "Change image",
   "goal.photoDenied": "Allow photo access to upload a goal image.",
   "goal.nameRequired": "Enter a goal name.",
   "goal.targetRequired": "Enter a target greater than zero.",
