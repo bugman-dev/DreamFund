@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronDown } from 'lucide-react-native';
@@ -13,6 +13,7 @@ import { useData } from '../data/store';
 import { ConfirmModal } from './ConfirmModal';
 import { DateField } from './DateField';
 import { GoalImage } from './GoalImage';
+import { GoalSheet } from './GoalSheet';
 import { Button, EmptyState, ErrorText, Field, LoadingScreen, Screen, ScreenHeader } from './ui';
 
 export function MoneyForm({
@@ -56,6 +57,12 @@ export function MoneyForm({
   const [picking, setPicking] = useState<'from' | 'to' | null>(null);
   const goal = active.find((item) => item.id === goalId);
   const counter = active.find((item) => item.id === counterGoalId);
+  const sheetGoals = useRef(active);
+  const sheetSelected = useRef(goalId);
+  if (picking) {
+    sheetGoals.current = picking === 'to' ? active.filter((item) => item.id !== goalId) : active;
+    sheetSelected.current = picking === 'to' ? counterGoalId : goalId;
+  }
   const title = mode === 'add' ? text('money.addTitle') : mode === 'withdraw' ? text('money.withdrawTitle') : text('money.transferTitle');
   const action = mode === 'add' ? text('money.addAction') : mode === 'withdraw' ? text('money.withdrawAction') : text('money.transferAction');
 
@@ -165,30 +172,21 @@ export function MoneyForm({
         </Field>
         {error ? <ErrorText>{error}</ErrorText> : null}
       </View>
-      {picking ? (
-        <View style={styles.picker}>
-          {active.filter((item) => (picking === 'to' ? item.id !== goalId : true)).map((item) => (
-            <Pressable
-              key={item.id}
-              accessibilityRole="button"
-              onPress={() => {
-                if (picking === 'from') {
-                  setGoalId(item.id);
-                  if (item.id === counterGoalId) setCounterGoalId(active.find((goal) => goal.id !== item.id)?.id ?? '');
-                } else {
-                  setCounterGoalId(item.id);
-                }
-                setPicking(null);
-              }}
-              style={styles.pickerRow}
-            >
-              <Text style={styles.pickerName}>{item.name}</Text>
-              <Text style={styles.pickerMeta}>{text('money.savedMeta', { amount: formatInr(item.allocatedPaise) })}</Text>
-            </Pressable>
-          ))}
-          <Button label={text('common.close')} tone="ghost" onPress={() => setPicking(null)} />
-        </View>
-      ) : null}
+      <GoalSheet
+        visible={picking !== null}
+        goals={sheetGoals.current}
+        selectedId={sheetSelected.current}
+        onClose={() => setPicking(null)}
+        onSelect={(id) => {
+          if (picking === 'from') {
+            setGoalId(id);
+            if (id === counterGoalId) setCounterGoalId(active.find((goal) => goal.id !== id)?.id ?? '');
+          } else {
+            setCounterGoalId(id);
+          }
+          setPicking(null);
+        }}
+      />
       <ConfirmModal
         visible={confirming}
         title={action}
@@ -231,8 +229,4 @@ const styles = StyleSheet.create({
   shortcutText: { fontFamily: fonts.medium, fontSize: 13, color: colors.forest },
   note: { minHeight: 88, borderRadius: 14, borderWidth: 1, borderColor: colors.grey, backgroundColor: colors.white, padding: 14, fontFamily: fonts.regular, fontSize: 15, color: colors.ink, textAlignVertical: 'top' },
   count: { alignSelf: 'flex-end', fontFamily: fonts.regular, fontSize: 12, color: colors.muted, marginTop: 6 },
-  picker: { marginHorizontal: 20, backgroundColor: colors.white, borderRadius: 12, padding: 12, gap: 8 },
-  pickerRow: { paddingVertical: 10, paddingHorizontal: 8 },
-  pickerName: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
-  pickerMeta: { fontFamily: fonts.regular, fontSize: 12, color: colors.muted },
 });
