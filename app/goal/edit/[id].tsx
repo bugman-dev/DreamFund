@@ -2,7 +2,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { paiseToInput } from '../../../src/domain/ledger';
 import { GoalForm } from '../../../src/components/GoalForm';
 import { EmptyState, Screen, ScreenHeader } from '../../../src/components/ui';
-import { useBooks } from '../../../src/data/useBooks';
+import { useGoalSummary } from '../../../src/data/useGoalSummary';
+import { useData } from '../../../src/data/store';
 import { useText } from '../../../src/locale';
 
 export default function EditGoalScreen() {
@@ -10,7 +11,8 @@ export default function EditGoalScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const goalId = typeof id === 'string' ? id : '';
-  const books = useBooks();
+  const books = useGoalSummary();
+  const data = useData();
   const goal = books.goals.find((item) => item.id === goalId && !item.deletedAt);
   const presented = books.active.find((item) => item.id === goalId);
   if (!goal || !presented) {
@@ -35,7 +37,7 @@ export default function EditGoalScreen() {
         imageUri: goal.imageUri,
       }}
       onSubmit={async (draft) => {
-        await books.updateGoal(goal.id, draft);
+        await data.updateGoal(goal.id, draft);
         router.back();
       }}
     />

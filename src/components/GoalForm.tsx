@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { ChevronDown, ImagePlus } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { parseRupees } from '../domain/ledger';
 import type { Category } from '../domain/categories';
-import { formatInr } from '../domain/ledger';
+import { useAmount } from '../currency/Currency';
 import { PRESET_IMAGE_PREFIX } from '../constants';
 import { useText } from '../locale';
-import { colors } from '../theme/colors';
+import type { Palette } from '../theme/palettes';
+import { useColors } from '../theme/Theme';
 import { fonts } from '../theme/type';
 import { CategorySheet } from './CategorySheet';
 import { DateField } from './DateField';
@@ -39,6 +40,9 @@ export function GoalForm({
   allocatedPaise?: number;
   onSubmit: (draft: GoalDraft) => Promise<void>;
 }) {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const amount = useAmount();
   const text = useText();
   const router = useRouter();
   const [name, setName] = useState(initial.name);
@@ -91,12 +95,15 @@ export function GoalForm({
       <ScreenHeader title={title} onBack={() => router.back()} />
       <View style={styles.imageWrap}>
         <GoalImage uri={imageUri} style={styles.preview} iconSize={36} />
-        {uploaded ? null : (
-          <Pressable accessibilityRole="button" accessibilityLabel={text('goal.uploadA11y')} onPress={upload} style={styles.upload}>
-            <ImagePlus color={colors.forest} size={18} />
-            <Text style={styles.uploadText}>{text('goal.upload')}</Text>
-          </Pressable>
-        )}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={text(uploaded ? 'goal.changeImageA11y' : 'goal.uploadA11y')}
+          onPress={upload}
+          style={styles.upload}
+        >
+          <ImagePlus color={colors.forest} size={18} />
+          <Text style={styles.uploadText}>{text(uploaded ? 'goal.changeImage' : 'goal.upload')}</Text>
+        </Pressable>
       </View>
       <View style={styles.form}>
         <Field label={text('goal.name')}>
@@ -112,7 +119,7 @@ export function GoalForm({
         <Field label={text('goal.target')}>
           <TextField value={target} onChangeText={setTarget} placeholder={text('goal.targetPlaceholder')} />
         </Field>
-        {allocatedPaise > 0 ? <Text style={styles.hint}>{text('goal.minimumTarget', { amount: formatInr(allocatedPaise) })}</Text> : null}
+        {allocatedPaise > 0 ? <Text style={styles.hint}>{text('goal.minimumTarget', { amount: amount(allocatedPaise) })}</Text> : null}
         <DateField label={text('goal.targetDate')} value={targetDate} onChange={setTargetDate} optional />
         {error ? <ErrorText>{error}</ErrorText> : null}
       </View>
@@ -121,7 +128,8 @@ export function GoalForm({
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Palette) {
+  return StyleSheet.create({
   imageWrap: { marginHorizontal: 20, marginBottom: 8 },
   preview: { width: '100%', height: 160, borderRadius: 12 },
   upload: { position: 'absolute', right: 12, bottom: 12, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.white, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
@@ -131,4 +139,5 @@ const styles = StyleSheet.create({
   selectText: { flex: 1, fontFamily: fonts.medium, fontSize: 16, color: colors.ink },
   placeholder: { color: colors.muted },
   hint: { fontFamily: fonts.regular, fontSize: 13, color: colors.muted, marginTop: -8, marginBottom: 12 },
-});
+  });
+}

@@ -3,12 +3,14 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeftRight, Minus, Plus } from 'lucide-react-native';
 import { formatDay, formatMonth } from '../../src/domain/dates';
-import { compareTransactions, formatInr } from '../../src/domain/ledger';
-import { transactionDetail, transactionTitle } from '../../src/data/present';
+import { useAmount } from '../../src/currency/Currency';
+import { compareTransactions } from '../../src/domain/ledger';
+import { transactionTitle } from '../../src/data/present';
 import { EmptyState, FilterChip, Screen, Title } from '../../src/components/ui';
-import { useBooks } from '../../src/data/useBooks';
+import { useGoalSummary } from '../../src/data/useGoalSummary';
 import { useText, type MessageId } from '../../src/locale';
-import { colors } from '../../src/theme/colors';
+import type { Palette } from '../../src/theme/palettes';
+import { useColors } from '../../src/theme/Theme';
 import { fonts } from '../../src/theme/type';
 
 const FILTERS = [
@@ -26,12 +28,15 @@ function transactionFilter(value: string | string[] | undefined): TransactionFil
 }
 
 export default function TransactionsScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const amount = useAmount();
   const text = useText();
   const router = useRouter();
   const params = useLocalSearchParams<{ goalId?: string; type?: string }>();
   const goalId = typeof params.goalId === 'string' ? params.goalId : '';
   const type = transactionFilter(params.type);
-  const books = useBooks();
+  const books = useGoalSummary();
   const goal = books.presented.find((item) => item.id === goalId);
   const rows = useMemo(() => {
     return books.transactions
@@ -75,11 +80,11 @@ export default function TransactionsScreen() {
                   </View>
                   <View style={styles.copy}>
                     <Text style={styles.rowTitle}>{transactionTitle(tx, books.goals)}</Text>
-                    <Text style={styles.rowDetail}>{transactionDetail(tx, books.goals) || formatDay(tx.date)}</Text>
-                    {tx.note ? <Text style={styles.rowDate}>{formatDay(tx.date)}</Text> : null}
+                    <Text style={styles.rowDetail}>{formatDay(tx.date)}</Text>
+                    {tx.note.trim() ? <Text style={styles.note} numberOfLines={2}>{tx.note.trim()}</Text> : null}
                   </View>
                   <Text style={[styles.amount, positive && styles.amountPositive, negative && styles.amountNegative]}>
-                    {negative ? '-' : positive ? '+' : ''}{formatInr(tx.amountPaise)}
+                    {negative ? '-' : positive ? '+' : ''}{amount(tx.amountPaise)}
                   </Text>
                 </Pressable>
               );
@@ -91,7 +96,8 @@ export default function TransactionsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Palette) {
+  return StyleSheet.create({
   filters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 20, paddingVertical: 16 },
   goalFilter: { alignSelf: 'flex-start', marginHorizontal: 20, marginBottom: 8, backgroundColor: colors.paleSage, borderRadius: 99, paddingHorizontal: 12, paddingVertical: 6 },
   goalFilterText: { fontFamily: fonts.medium, fontSize: 13, color: colors.forest },
@@ -103,8 +109,9 @@ const styles = StyleSheet.create({
   copy: { flex: 1 },
   rowTitle: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ink },
   rowDetail: { fontFamily: fonts.regular, fontSize: 12, color: colors.muted, marginTop: 2 },
-  rowDate: { fontFamily: fonts.regular, fontSize: 12, color: colors.muted, marginTop: 2 },
+  note: { fontFamily: fonts.regular, fontSize: 13, color: colors.ink, marginTop: 2 },
   amount: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ink },
   amountPositive: { color: colors.sage },
   amountNegative: { color: colors.rose },
-});
+  });
+}

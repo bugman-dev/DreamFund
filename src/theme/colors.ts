@@ -1,28 +1,13 @@
-export const colors = {
-  forest: '#123F32',
-  ivory: '#F7F2E9',
-  white: '#FFFCF6',
-  sage: '#2F6F59',
-  paleSage: '#DDE8DD',
-  amber: '#F5AD43',
-  sky: '#159BD7',
-  rose: '#C96F66',
-  roseSoft: '#F6E6E3',
-  grey: '#E7E3DC',
-  ink: '#1E2823',
-  muted: '#6B726C',
-};
+import type { Palette } from './palettes';
+import { palettes } from './palettes';
 
-const accents: Record<string, string> = {
-  'Home & Living': colors.sage,
-  Travel: colors.amber,
-  Personal: colors.forest,
-  Shopping: colors.sage,
-  Education: colors.sky,
-  Gadget: colors.sky,
-};
+export const colors = palettes.forest;
 
-export function accentFor(name: string | undefined): string {
-  if (!name) return colors.sage;
-  return accents[name] ?? colors.sage;
+const ACCENT_KEYS = ['sage', 'amber', 'sky', 'forest'] as const;
+
+export function accentFor(name: string | undefined, palette: Palette = colors): string {
+  if (!name) return palette.sage;
+  let hash = 0;
+  for (const char of name) hash = Math.imul(hash, 33) + char.charCodeAt(0);
+  return palette[ACCENT_KEYS[Math.abs(hash) % ACCENT_KEYS.length]];
 }

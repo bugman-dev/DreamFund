@@ -1,4 +1,5 @@
-import { GOAL_DELETED_NOTE, GOAL_DELETED_REASON, INR_SYMBOL, NAME_LIMIT, NOTE_LIMIT, PAISE_PER_RUPEE } from '../constants';
+import { GOAL_DELETED_NOTE, GOAL_DELETED_REASON, NAME_LIMIT, NOTE_LIMIT, PAISE_PER_RUPEE } from '../constants';
+import { formatAmount as formatMoney, type CurrencyId } from './money';
 import { t } from '../locale/messages';
 
 export { GOAL_DELETED_NOTE, NAME_LIMIT, NOTE_LIMIT };
@@ -68,19 +69,7 @@ export function emptyLedger(): LedgerState {
 }
 
 export function formatInr(paise: number): string {
-  const negative = paise < 0;
-  const absolute = Math.abs(paise);
-  const rupees = Math.trunc(absolute / PAISE_PER_RUPEE);
-  const fraction = absolute % PAISE_PER_RUPEE;
-  const body = fraction === 0 ? groupIndian(String(rupees)) : `${groupIndian(String(rupees))}.${String(fraction).padStart(2, '0')}`;
-  return `${negative ? '-' : ''}${INR_SYMBOL}${body}`;
-}
-
-function groupIndian(whole: string): string {
-  if (whole.length <= 3) return whole;
-  const head = whole.slice(0, -3);
-  const tail = whole.slice(-3);
-  return `${head.replace(/\B(?=(\d{2})+(?!\d))/g, ',')},${tail}`;
+  return formatMoney(paise, 'inr');
 }
 
 export function parseRupees(input: string): number | null {
@@ -102,7 +91,7 @@ export function isCompleted(allocatedPaise: number, targetPaise: number): boolea
   return targetPaise > 0 && allocatedPaise >= targetPaise;
 }
 
-export function project(state: LedgerState): { ok: true; allocated: Map<string, number> } | LedgerFailure {
+export function replayLedger(state: LedgerState, currency: CurrencyId = 'inr'): { ok: true; allocated: Map<string, number> } | LedgerFailure {
   const goals = new Map(state.goals.map((goal) => [goal.id, goal]));
   const allocated = new Map(state.goals.map((goal) => [goal.id, 0]));
   const ordered = [...state.transactions].sort(compareTransactions);
@@ -120,7 +109,7 @@ export function project(state: LedgerState): { ok: true; allocated: Map<string, 
         return fail(
           room <= 0
             ? t('ledger.addFull', { name: goal.name })
-            : t('ledger.addRoom', { amount: formatInr(room), name: goal.name }),
+            : t('ledger.addRoom', { amount: formatMoney(room, currency), name: goal.name }),
         );
       }
       allocated.set(tx.goalId, next);
@@ -130,7 +119,7 @@ export function project(state: LedgerState): { ok: true; allocated: Map<string, 
     if (tx.type === 'withdrawal') {
       const available = allocated.get(tx.goalId) ?? 0;
       const next = available - tx.amountPaise;
-      if (next < 0) return fail(t('ledger.available', { amount: formatInr(available), name: goal.name }));
+      if (next < 0) return fail(t('ledger.available', { amount: formatMoney(available, currency), name: goal.name }));
       allocated.set(tx.goalId, next);
       continue;
     }
@@ -139,14 +128,14 @@ export function project(state: LedgerState): { ok: true; allocated: Map<string, 
     const destination = goals.get(tx.counterGoalId);
     if (!destination) return fail(t('ledger.goalMissing'));
     const available = allocated.get(tx.goalId) ?? 0;
-    if (available < tx.amountPaise) return fail(t('ledger.available', { amount: formatInr(available), name: goal.name }));
+    if (available < tx.amountPaise) return fail(t('ledger.available', { amount: formatMoney(available, currency), name: goal.name }));
     const destNext = (allocated.get(tx.counterGoalId) ?? 0) + tx.amountPaise;
     if (destNext > destination.targetPaise) {
       const room = destination.targetPaise - (allocated.get(tx.counterGoalId) ?? 0);
       return fail(
         room <= 0
           ? t('ledger.transferFull', { name: destination.name })
-          : t('ledger.transferRoom', { amount: formatInr(room), name: destination.name }),
+          : t('ledger.transferRoom', { amount: formatMoney(room, currency), name: destination.name }),
       );
     }
     allocated.set(tx.goalId, available - tx.amountPaise);
@@ -202,7 +191,7 @@ export function validateGoalDraft(input: {
   targetPaise: number;
   targetDate: string | null;
   allocatedPaise?: number;
-}): string | null {
+}, currency: CurrencyId = 'inr'): string | null {
   const name = input.name.trim();
   if (!name) return t('goal.nameRequired');
   if (name.length > NAME_LIMIT) return t('ledger.nameLimit', { limit: NAME_LIMIT });
@@ -210,7 +199,7 @@ export function validateGoalDraft(input: {
   if (!Number.isInteger(input.targetPaise) || input.targetPaise <= 0) return t('goal.targetRequired');
   const allocated = input.allocatedPaise ?? 0;
   if (input.targetPaise < allocated) {
-    return t('ledger.targetMinimum', { amount: formatInr(allocated) });
+    return t('ledger.targetMinimum', { amount: formatMoney(allocated, currency) });
   }
   if (input.targetDate && !isRealDate(input.targetDate)) return t('ledger.targetDate');
   return null;
@@ -220,6 +209,7 @@ export function applyAddition(
   state: LedgerState,
   input: { goalId: string; amountPaise: number; date: string; note: string },
   clock: Clock,
+  currency: CurrencyId = 'inr',
 ): LedgerResult {
   const goal = state.goals.find((item) => item.id === input.goalId);
   if (!goal || goal.deletedAt) return fail(t('ledger.activeGoal'));
@@ -236,13 +226,14 @@ export function applyAddition(
     counterGoalId: null,
     lockedReason: null,
   }));
-  return commit(next);
+  return commit(next, currency);
 }
 
 export function applyWithdrawal(
   state: LedgerState,
   input: { goalId: string; amountPaise: number; date: string; note: string },
   clock: Clock,
+  currency: CurrencyId = 'inr',
 ): LedgerResult {
   const goal = state.goals.find((item) => item.id === input.goalId);
   if (!goal || goal.deletedAt) return fail(t('ledger.activeGoal'));
@@ -259,13 +250,14 @@ export function applyWithdrawal(
     counterGoalId: null,
     lockedReason: null,
   }));
-  return commit(next);
+  return commit(next, currency);
 }
 
 export function applyTransfer(
   state: LedgerState,
   input: { fromGoalId: string; toGoalId: string; amountPaise: number; date: string; note: string },
   clock: Clock,
+  currency: CurrencyId = 'inr',
 ): LedgerResult {
   if (input.fromGoalId === input.toGoalId) return fail(t('ledger.twoGoals'));
   const source = state.goals.find((item) => item.id === input.fromGoalId);
@@ -284,7 +276,7 @@ export function applyTransfer(
     counterGoalId: destination.id,
     lockedReason: null,
   }));
-  return commit(next);
+  return commit(next, currency);
 }
 
 export function applyEdit(
@@ -298,6 +290,7 @@ export function applyEdit(
     counterGoalId?: string | null;
   },
   clock: Clock,
+  currency: CurrencyId = 'inr',
 ): LedgerResult {
   const current = state.transactions.find((item) => item.id === input.transactionId);
   if (!current) return fail(t('ledger.txMissing'));
@@ -340,7 +333,7 @@ export function applyEdit(
     updated: snapshot(updated),
     editedAt: clock.now,
   });
-  return commit(next);
+  return commit(next, currency);
 }
 
 export function applyGoalPatch(
@@ -353,10 +346,11 @@ export function applyGoalPatch(
     targetDate?: string | null;
     imageUri?: string | null;
   },
+  currency: CurrencyId = 'inr',
 ): LedgerResult {
   const goal = state.goals.find((item) => item.id === goalId);
   if (!goal || goal.deletedAt) return fail(t('ledger.goalNotFound'));
-  const projected = project(state);
+  const projected = replayLedger(state, currency);
   if (!projected.ok) return projected;
   const draftError = validateGoalDraft({
     name: patch.name ?? goal.name,
@@ -364,7 +358,7 @@ export function applyGoalPatch(
     targetPaise: patch.targetPaise ?? goal.targetPaise,
     targetDate: patch.targetDate === undefined ? goal.targetDate : patch.targetDate,
     allocatedPaise: projected.allocated.get(goal.id) ?? 0,
-  });
+  }, currency);
   if (draftError) return fail(draftError);
   const next = cloneState(state);
   next.goals = next.goals.map((item) =>
@@ -379,17 +373,18 @@ export function applyGoalPatch(
         }
       : item,
   );
-  return commit(next);
+  return commit(next, currency);
 }
 
 export function applyGoalDeletion(
   state: LedgerState,
   input: { goalId: string; categoryName: string; categoryIcon: string },
   clock: Clock,
+  currency: CurrencyId = 'inr',
 ): LedgerResult {
   const goal = state.goals.find((item) => item.id === input.goalId);
   if (!goal || goal.deletedAt) return fail(t('ledger.goalNotFound'));
-  const projected = project(state);
+  const projected = replayLedger(state, currency);
   if (!projected.ok) return projected;
   const allocated = projected.allocated.get(goal.id) ?? 0;
   const next = cloneState(state);
@@ -414,16 +409,16 @@ export function applyGoalDeletion(
         }
       : item,
   );
-  return commit(next);
+  return commit(next, currency);
 }
 
-function commit(state: LedgerState): LedgerResult {
+function commit(state: LedgerState, currency: CurrencyId = 'inr'): LedgerResult {
   const seen = new Set<string>();
   for (const tx of state.transactions) {
     if (seen.has(tx.id)) return fail(t('ledger.duplicate'));
     seen.add(tx.id);
   }
-  const projected = project(state);
+  const projected = replayLedger(state, currency);
   if (!projected.ok) return projected;
   if (reconciliationError(state, projected.allocated)) return fail(t('error.reconcile'));
   return { ok: true, state };

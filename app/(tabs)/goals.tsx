@@ -2,17 +2,21 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Search } from 'lucide-react-native';
+import { compareTransactions } from '../../src/domain/ledger';
 import { GoalCard } from '../../src/components/GoalCard';
 import { EmptyState, FilterChip, Screen, Title } from '../../src/components/ui';
-import { useBooks } from '../../src/data/useBooks';
+import { useGoalSummary } from '../../src/data/useGoalSummary';
 import { useText } from '../../src/locale';
-import { colors } from '../../src/theme/colors';
+import type { Palette } from '../../src/theme/palettes';
+import { useColors } from '../../src/theme/Theme';
 import { fonts } from '../../src/theme/type';
 
 export default function GoalsScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   const router = useRouter();
-  const books = useBooks();
+  const books = useGoalSummary();
   const [categoryId, setCategoryId] = useState('all');
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState('');
@@ -25,6 +29,17 @@ export default function GoalsScreen() {
     [books.active, categoryId, query],
   );
   const categoryName = books.categories.find((category) => category.id === categoryId)?.name;
+  const notes = useMemo(() => {
+    const latest = new Map<string, string>();
+    const ordered = [...books.transactions].sort(compareTransactions);
+    for (const tx of ordered) {
+      const note = tx.note.trim();
+      if (!note) continue;
+      latest.set(tx.goalId, note);
+      if (tx.counterGoalId) latest.set(tx.counterGoalId, note);
+    }
+    return latest;
+  }, [books.transactions]);
 
   return (
     <Screen>
@@ -58,13 +73,14 @@ export default function GoalsScreen() {
           onAction={() => router.push('/goal/create')}
         />
       ) : (
-        goals.map((goal) => <GoalCard key={goal.id} goal={goal} onPress={() => router.push(`/goal/${goal.id}`)} />)
+        goals.map((goal) => <GoalCard key={goal.id} goal={goal} note={notes.get(goal.id)} onPress={() => router.push(`/goal/${goal.id}`)} />)
       )}
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Palette) {
+  return StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingRight: 12 },
   searchButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
   search: {
@@ -81,4 +97,5 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   filters: { paddingHorizontal: 20, gap: 8, paddingBottom: 16 },
-});
+  });
+}

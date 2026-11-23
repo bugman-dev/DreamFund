@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, Ellipsis, Minus, Plus } from 'lucide-react-native';
@@ -6,23 +6,30 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import { PERCENT_MAX } from '../../src/constants';
 import { daysUntil, formatDay, todayIso } from '../../src/domain/dates';
-import { compareTransactions, formatInr } from '../../src/domain/ledger';
+import { useAmount } from '../../src/currency/Currency';
+import { compareTransactions } from '../../src/domain/ledger';
 import { transactionTitle } from '../../src/data/present';
 import { ConfirmModal } from '../../src/components/ConfirmModal';
 import { GoalImage } from '../../src/components/GoalImage';
 import { Button, CategoryChip, EmptyState } from '../../src/components/ui';
-import { useBooks } from '../../src/data/useBooks';
+import { useGoalSummary } from '../../src/data/useGoalSummary';
+import { useData } from '../../src/data/store';
 import { useText } from '../../src/locale';
-import { colors } from '../../src/theme/colors';
+import type { Palette } from '../../src/theme/palettes';
+import { useColors } from '../../src/theme/Theme';
 import { fonts } from '../../src/theme/type';
 
 export default function GoalDetailsScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const amount = useAmount();
   const text = useText();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const goalId = typeof id === 'string' ? id : '';
-  const books = useBooks();
+  const books = useGoalSummary();
+  const data = useData();
   const goal = books.active.find((item) => item.id === goalId);
   const [menu, setMenu] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -45,7 +52,7 @@ export default function GoalDetailsScreen() {
 
   async function remove() {
     try {
-      await books.deleteGoal(current.id);
+      await data.deleteGoal(current.id);
       router.back();
     } catch (reason) {
       setConfirming(false);
@@ -71,9 +78,9 @@ export default function GoalDetailsScreen() {
           {goal.completed ? <Text style={styles.completed}>{text('common.completed')}</Text> : null}
           <View style={styles.figures}>
             <View style={styles.figureCopy}>
-              <Text style={styles.amount}>{formatInr(goal.allocatedPaise)}</Text>
-              <Text style={styles.of}>{text('home.ofAmount', { amount: formatInr(goal.targetPaise) })}</Text>
-              <Text style={styles.remaining}>{text('common.remaining', { amount: formatInr(goal.remainingPaise) })}</Text>
+              <Text style={styles.amount}>{amount(goal.allocatedPaise)}</Text>
+              <Text style={styles.of}>{text('home.ofAmount', { amount: amount(goal.targetPaise) })}</Text>
+              <Text style={styles.remaining}>{text('common.remaining', { amount: amount(goal.remainingPaise) })}</Text>
             </View>
             <Ring progress={goal.progress} />
           </View>
@@ -107,7 +114,7 @@ export default function GoalDetailsScreen() {
                 <Text style={styles.activityDate}>{formatDay(tx.date)}</Text>
               </View>
               <Text style={[styles.activityAmount, outgoing && styles.negative]}>
-                {outgoing ? '-' : '+'}{formatInr(tx.amountPaise)}
+                {outgoing ? '-' : '+'}{amount(tx.amountPaise)}
               </Text>
             </Pressable>
           );
@@ -142,7 +149,7 @@ export default function GoalDetailsScreen() {
         visible={confirming}
         title={text('goal.deleteTitle', { name: goal.name })}
         message={goal.allocatedPaise > 0
-          ? text('goal.deleteFunded', { amount: formatInr(goal.allocatedPaise) })
+          ? text('goal.deleteFunded', { amount: amount(goal.allocatedPaise) })
           : text('goal.deleteEmpty')}
         confirmLabel={text('goal.delete')}
         tone="danger"
@@ -154,6 +161,8 @@ export default function GoalDetailsScreen() {
 }
 
 function Ring({ progress }: { progress: number }) {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const radius = 28;
   const circumference = 2 * Math.PI * radius;
   const dash = (progress / PERCENT_MAX) * circumference;
@@ -178,7 +187,8 @@ function Ring({ progress }: { progress: number }) {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Palette) {
+  return StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.ivory },
   missing: { flex: 1, backgroundColor: colors.ivory, justifyContent: 'center' },
   hero: { height: 240, width: '100%' },
@@ -219,4 +229,5 @@ const styles = StyleSheet.create({
   menuItem: { paddingHorizontal: 16, paddingVertical: 12 },
   menuText: { fontFamily: fonts.medium, fontSize: 15, color: colors.ink },
   menuDanger: { fontFamily: fonts.medium, fontSize: 15, color: colors.rose },
-});
+  });
+}

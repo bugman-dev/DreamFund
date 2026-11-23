@@ -13,7 +13,7 @@ import {
   GOAL_DELETED_NOTE,
   isCompleted,
   netSaved,
-  project,
+  replayLedger,
   totalSavings,
   type Clock,
   type GoalRecord,
@@ -56,14 +56,14 @@ function must(result: { ok: true; state: LedgerState } | { ok: false; error: str
 }
 
 function allocated(state: LedgerState, id: string): number {
-  const projected = project(state);
+  const projected = replayLedger(state);
   assert.equal(projected.ok, true);
   if (!projected.ok) return 0;
   return projected.allocated.get(id) ?? 0;
 }
 
 function saved(state: LedgerState): number {
-  const projected = project(state);
+  const projected = replayLedger(state);
   assert.equal(projected.ok, true);
   if (!projected.ok) return 0;
   return totalSavings(state, projected.allocated);
