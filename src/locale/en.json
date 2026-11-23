@@ -203,6 +203,8 @@
   "categories.title": "Categories",
   "categories.edit": "Edit",
   "categories.add": "Add category",
+  "categories.saveChanges": "Save changes",
+  "categories.delete": "Delete category",
   "categories.new": "New category",
   "categories.editTitle": "Edit category",
   "categories.namePlaceholder": "Category name",

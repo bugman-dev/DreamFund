@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { X } from 'lucide-react-native';
 import { ICON_NAMES } from '../src/domain/icons';
 import type { Category } from '../src/domain/categories';
 import { AppIcon } from '../src/components/icons';
@@ -19,6 +20,7 @@ export default function CategoriesScreen() {
   const [icon, setIcon] = useState('Heart');
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [openSheet, setOpenSheet] = useState(false);
 
   function open(category?: Category) {
     setError(null);
@@ -27,12 +29,13 @@ export default function CategoriesScreen() {
       setName(category.name);
       setIcon(category.icon);
       setCreating(false);
-      return;
+    } else {
+      setEditing(null);
+      setName('');
+      setIcon('Heart');
+      setCreating(true);
     }
-    setEditing(null);
-    setName('');
-    setIcon('Heart');
-    setCreating(true);
+    setOpenSheet(true);
   }
 
   async function save() {
@@ -40,8 +43,7 @@ export default function CategoriesScreen() {
     try {
       if (creating) await data.createCategory(name, icon);
       else if (editing) await data.updateCategory(editing.id, name, icon);
-      setCreating(false);
-      setEditing(null);
+      setOpenSheet(false);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : text('categories.saveFailed'));
     }
@@ -52,10 +54,14 @@ export default function CategoriesScreen() {
     setError(null);
     try {
       await data.deleteCategory(editing.id);
-      setEditing(null);
+      setOpenSheet(false);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : text('categories.deleteFailed'));
     }
+  }
+
+  function close() {
+    setOpenSheet(false);
   }
 
   return (
@@ -75,10 +81,15 @@ export default function CategoriesScreen() {
       <View style={styles.add}>
         <Button label={text('categories.add')} onPress={() => open()} />
       </View>
-      <Modal visible={creating || editing != null} transparent animationType="fade" onRequestClose={() => { setCreating(false); setEditing(null); }}>
+      <Modal visible={openSheet} transparent animationType="fade" onRequestClose={close}>
         <View style={styles.backdrop}>
           <View style={styles.sheet}>
-            <Text style={styles.sheetTitle}>{creating ? text('categories.new') : text('categories.editTitle')}</Text>
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>{creating ? text('categories.new') : text('categories.editTitle')}</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel={text('common.close')} onPress={close} hitSlop={8} style={styles.close}>
+                <X color={colors.ink} size={22} />
+              </Pressable>
+            </View>
             <TextInput value={name} onChangeText={setName} placeholder={text('categories.namePlaceholder')} placeholderTextColor={colors.muted} style={styles.input} />
             <View style={styles.icons}>
               {ICON_NAMES.map((item) => (
@@ -88,9 +99,18 @@ export default function CategoriesScreen() {
               ))}
             </View>
             {error ? <ErrorText>{error}</ErrorText> : null}
-            <Button label={text('common.save')} onPress={() => void save()} />
-            {editing ? <Button label={text('common.delete')} tone="danger" onPress={() => void remove()} /> : null}
-            <Button label={text('common.close')} tone="ghost" onPress={() => { setCreating(false); setEditing(null); }} />
+            {editing ? (
+              <View style={styles.actions}>
+                <View style={styles.action}>
+                  <Button label={text('categories.delete')} tone="danger" onPress={() => void remove()} />
+                </View>
+                <View style={styles.action}>
+                  <Button label={text('categories.saveChanges')} onPress={() => void save()} />
+                </View>
+              </View>
+            ) : (
+              <Button label={text('categories.add')} onPress={() => void save()} />
+            )}
           </View>
         </View>
       </Modal>
@@ -107,7 +127,11 @@ const styles = StyleSheet.create({
   add: { padding: 20 },
   backdrop: { flex: 1, backgroundColor: 'rgba(30, 40, 35, 0.4)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: colors.ivory, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 12, maxHeight: '80%' },
-  sheetTitle: { fontFamily: fonts.semibold, fontSize: 20, color: colors.ink },
+  sheetHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  sheetTitle: { flex: 1, fontFamily: fonts.semibold, fontSize: 20, color: colors.ink },
+  close: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  actions: { flexDirection: 'row', gap: 10 },
+  action: { flex: 1 },
   input: { backgroundColor: colors.white, borderRadius: 14, borderWidth: 1, borderColor: colors.grey, minHeight: 48, paddingHorizontal: 14, fontFamily: fonts.regular, fontSize: 16, color: colors.ink },
   icons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   choice: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.paleSage, alignItems: 'center', justifyContent: 'center' },
