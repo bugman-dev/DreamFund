@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { Check, Search, X } from 'lucide-react-native';
+import { Check, ChevronDown, ChevronRight, Search, X } from 'lucide-react-native';
 import { ICON_NAMES } from '../domain/icons';
 import { useData } from '../data/store';
 import { useText } from '../locale';
@@ -23,10 +23,15 @@ export function CategorySheet({
   const text = useText();
   const data = useData();
   const [query, setQuery] = useState('');
+  const [adding, setAdding] = useState(false);
   const [name, setName] = useState('');
   const [icon, setIcon] = useState<string>('Heart');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (visible) setAdding(false);
+  }, [visible]);
   const categories = useMemo(
     () => data.categories.filter((category) => category.name.toLowerCase().includes(query.trim().toLowerCase())),
     [data.categories, query],
@@ -67,6 +72,7 @@ export function CategorySheet({
           />
         </View>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
+          {categories.length === 0 ? <Text style={styles.empty}>{text('category.empty')}</Text> : null}
           {categories.map((category) => {
             const selected = category.id === selectedId;
             return (
@@ -79,30 +85,37 @@ export function CategorySheet({
               </Pressable>
             );
           })}
-          <Text style={styles.addTitle}>{text('category.addTitle')}</Text>
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder={text('category.namePlaceholder')}
-            placeholderTextColor={colors.muted}
-            style={styles.nameInput}
-          />
-          <Text style={styles.choose}>{text('category.chooseIcon')}</Text>
-          <View style={styles.icons}>
-            {ICON_NAMES.map((item) => (
-              <Pressable
-                key={item}
-                accessibilityRole="button"
-                accessibilityLabel={item}
-                onPress={() => setIcon(item)}
-                style={[styles.choice, icon === item && styles.choiceSelected]}
-              >
-                <AppIcon name={item} size={18} color={icon === item ? colors.white : colors.forest} />
-              </Pressable>
-            ))}
-          </View>
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-          <Button label={name.trim() ? text('category.addNamed', { name: name.trim() }) : text('categories.add')} onPress={addCategory} disabled={saving || !name.trim()} />
+          <Pressable accessibilityRole="button" onPress={() => setAdding((open) => !open)} style={styles.addHeader}>
+            <Text style={styles.addTitle}>{text('category.addTitle')}</Text>
+            {adding ? <ChevronDown color={colors.ink} size={18} /> : <ChevronRight color={colors.ink} size={18} />}
+          </Pressable>
+          {adding ? (
+            <>
+              <TextInput
+                value={name}
+                onChangeText={setName}
+                placeholder={text('category.namePlaceholder')}
+                placeholderTextColor={colors.muted}
+                style={styles.nameInput}
+              />
+              <Text style={styles.choose}>{text('category.chooseIcon')}</Text>
+              <View style={styles.icons}>
+                {ICON_NAMES.map((item) => (
+                  <Pressable
+                    key={item}
+                    accessibilityRole="button"
+                    accessibilityLabel={item}
+                    onPress={() => setIcon(item)}
+                    style={[styles.choice, icon === item && styles.choiceSelected]}
+                  >
+                    <AppIcon name={item} size={18} color={icon === item ? colors.white : colors.forest} />
+                  </Pressable>
+                ))}
+              </View>
+              {error ? <Text style={styles.error}>{error}</Text> : null}
+              <Button label={name.trim() ? text('category.addNamed', { name: name.trim() }) : text('categories.add')} onPress={addCategory} disabled={saving || !name.trim()} />
+            </>
+          ) : null}
         </ScrollView>
       </View>
     </Modal>
@@ -132,7 +145,9 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
   iconTile: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.paleSage, alignItems: 'center', justifyContent: 'center' },
   name: { flex: 1, fontFamily: fonts.medium, fontSize: 16, color: colors.ink },
-  addTitle: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ink, marginTop: 18, marginBottom: 10 },
+  empty: { fontFamily: fonts.regular, fontSize: 15, color: colors.muted, paddingVertical: 12 },
+  addHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 18, marginBottom: 10 },
+  addTitle: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ink },
   nameInput: {
     backgroundColor: colors.white,
     borderRadius: 14,

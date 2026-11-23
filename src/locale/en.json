@@ -209,9 +209,10 @@
   "categories.deleted": "Category deleted.",
 
   "category.select": "Select Category",
-  "category.search": "Search or add category...",
+  "category.search": "Search category",
+  "category.empty": "No categories available",
   "category.addTitle": "Add New Category",
-  "category.namePlaceholder": "Fitness",
+  "category.namePlaceholder": "Category name",
   "category.chooseIcon": "Choose icon",
   "category.addNamed": "Add \"{name}\"",
   "category.createFailed": "The category could not be created.",
