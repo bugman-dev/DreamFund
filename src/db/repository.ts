@@ -5,6 +5,8 @@ import type { Category } from '../domain/categories';
 import { PRESET_CATEGORIES, presetCategoryId } from '../domain/categories';
 import { deviceClock } from '../domain/clock';
 import { isIconName } from '../domain/icons';
+import { BACKUP_VERSION, CATEGORY_NAME_LIMIT, DEFAULT_REMINDER_HOUR, DEFAULT_REMINDER_MINUTE, FALLBACK_ICON } from '../constants';
+import { t } from '../locale/messages';
 import {
   applyAddition,
   applyEdit,
@@ -123,12 +125,12 @@ export async function loadAll(userId: string): Promise<LoadedData> {
 
 export async function createCategory(userId: string, name: string, icon: string): Promise<Category> {
   const trimmed = name.trim();
-  if (!trimmed || trimmed.length > 40) throw new Error('Enter a category name up to 40 characters.');
-  if (!isIconName(icon)) throw new Error('Choose an icon.');
+  if (!trimmed || trimmed.length > CATEGORY_NAME_LIMIT) throw new Error(t('error.categoryName'));
+  if (!isIconName(icon)) throw new Error(t('error.chooseIcon'));
   return enqueue(async () => {
     const categories = await readCategories(userId);
     if (categories.some((category) => category.name.toLowerCase() === trimmed.toLowerCase())) {
-      throw new Error('A category with that name already exists.');
+      throw new Error(t('error.categoryExists'));
     }
     const category: Category = {
       id: randomUUID(),
@@ -152,15 +154,15 @@ export async function createCategory(userId: string, name: string, icon: string)
 
 export async function updateCategory(userId: string, id: string, name: string, icon: string): Promise<void> {
   const trimmed = name.trim();
-  if (!trimmed || trimmed.length > 40) throw new Error('Enter a category name up to 40 characters.');
-  if (!isIconName(icon)) throw new Error('Choose an icon.');
+  if (!trimmed || trimmed.length > CATEGORY_NAME_LIMIT) throw new Error(t('error.categoryName'));
+  if (!isIconName(icon)) throw new Error(t('error.chooseIcon'));
   await enqueue(async () => {
     const categories = await readCategories(userId);
     const current = categories.find((category) => category.id === id);
-    if (!current) throw new Error('That category could not be found.');
-    if (current.isPreset) throw new Error('Preset categories stay as they are.');
+    if (!current) throw new Error(t('error.categoryMissing'));
+    if (current.isPreset) throw new Error(t('error.presetLocked'));
     if (categories.some((category) => category.id !== id && category.name.toLowerCase() === trimmed.toLowerCase())) {
-      throw new Error('A category with that name already exists.');
+      throw new Error(t('error.categoryExists'));
     }
     const db = await getDatabase();
     await db.runAsync('UPDATE categories SET name = ?, icon = ? WHERE id = ? AND user_id = ?', trimmed, icon, id, userId);
@@ -171,11 +173,11 @@ export async function deleteCategory(userId: string, id: string): Promise<void> 
   await enqueue(async () => {
     const categories = await readCategories(userId);
     const current = categories.find((category) => category.id === id);
-    if (!current) throw new Error('That category could not be found.');
-    if (current.isPreset) throw new Error('Preset categories stay in Dream Fund.');
+    if (!current) throw new Error(t('error.categoryMissing'));
+    if (current.isPreset) throw new Error(t('error.presetStay'));
     const state = await readState(userId);
     if (state.goals.some((goal) => goal.categoryId === id)) {
-      throw new Error('This category is still used by a goal. Reassign those goals before deleting it.');
+      throw new Error(t('error.categoryInUse'));
     }
     const db = await getDatabase();
     await db.runAsync('DELETE FROM categories WHERE id = ? AND user_id = ?', id, userId);
@@ -191,7 +193,7 @@ export async function createGoal(
   const id = randomUUID();
   await enqueue(async () => {
     const categories = await readCategories(userId);
-    if (!categories.some((category) => category.id === input.categoryId)) throw new Error('Choose a category.');
+    if (!categories.some((category) => category.id === input.categoryId)) throw new Error(t('common.chooseCategory'));
     const db = await getDatabase();
     await db.runAsync(
       `INSERT INTO goals (
@@ -217,7 +219,7 @@ export async function updateGoal(
 ): Promise<void> {
   if (patch.categoryId) {
     const categories = await readCategories(userId);
-    if (!categories.some((category) => category.id === patch.categoryId)) throw new Error('Choose a category.');
+    if (!categories.some((category) => category.id === patch.categoryId)) throw new Error(t('common.chooseCategory'));
   }
   await mutate(userId, (state) => applyGoalPatch(state, goalId, patch));
 }
@@ -229,8 +231,8 @@ export async function deleteGoal(userId: string, goalId: string): Promise<void> 
     const category = categories.find((item) => item.id === goal?.categoryId);
     return applyGoalDeletion(state, {
       goalId,
-      categoryName: category?.name ?? goal?.categorySnapshot ?? 'Category',
-      categoryIcon: category?.icon ?? goal?.categoryIconSnapshot ?? 'Ellipsis',
+      categoryName: category?.name ?? goal?.categorySnapshot ?? t('present.category'),
+      categoryIcon: category?.icon ?? goal?.categoryIconSnapshot ?? FALLBACK_ICON,
     }, clock);
   });
 }
@@ -278,7 +280,7 @@ export async function savePreferences(userId: string, preferences: Preferences):
 export async function buildBackup(userId: string): Promise<BackupFile> {
   const loaded = await loadAll(userId);
   return {
-    version: 1,
+    version: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
     categories: loaded.categories,
     goals: loaded.state.goals,
@@ -357,7 +359,7 @@ async function mutate(userId: string, recipe: (state: LedgerState, clock: Return
       if (!result.ok) throw new Error(result.error);
       const projected = project(result.state);
       if (!projected.ok) throw new Error(projected.error);
-      if (reconciliationError(result.state, projected.allocated)) throw new Error('The ledger could not be reconciled.');
+      if (reconciliationError(result.state, projected.allocated)) throw new Error(t('error.reconcile'));
       await writeGoals(userId, result.state, projected.allocated);
       await db.runAsync('DELETE FROM audits WHERE user_id = ?', userId);
       await db.runAsync('DELETE FROM transactions WHERE user_id = ?', userId);
@@ -386,7 +388,7 @@ async function writeGoals(userId: string, state: LedgerState, allocated: Map<str
       goal.id,
       userId,
     );
-    if (result.changes === 0) throw new Error('A goal could not be saved.');
+    if (result.changes === 0) throw new Error(t('error.goalSave'));
   }
 }
 
@@ -457,8 +459,8 @@ async function readPreferences(userId: string): Promise<Preferences> {
   );
   return {
     reminderEnabled: row?.reminder_enabled === 1,
-    reminderHour: row?.reminder_hour ?? 20,
-    reminderMinute: row?.reminder_minute ?? 0,
+    reminderHour: row?.reminder_hour ?? DEFAULT_REMINDER_HOUR,
+    reminderMinute: row?.reminder_minute ?? DEFAULT_REMINDER_MINUTE,
   };
 }
 

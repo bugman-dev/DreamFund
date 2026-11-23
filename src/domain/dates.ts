@@ -1,3 +1,6 @@
+import { AFTERNOON_UNTIL_HOUR, MORNING_UNTIL_HOUR } from '../constants';
+import { t } from '../locale/messages';
+
 export type Period = 'month' | 'year' | 'all';
 
 export function todayIso(date = new Date()): string {
@@ -9,14 +12,14 @@ export function todayIso(date = new Date()): string {
 
 export function greeting(date = new Date()): string {
   const hour = date.getHours();
-  if (hour < 12) return 'Good Morning';
-  if (hour < 17) return 'Good Afternoon';
-  return 'Good Evening';
+  if (hour < MORNING_UNTIL_HOUR) return t('home.goodMorning');
+  if (hour < AFTERNOON_UNTIL_HOUR) return t('home.goodAfternoon');
+  return t('home.goodEvening');
 }
 
 export function firstName(name: string): string {
   const part = name.trim().split(/\s+/)[0];
-  return part || 'there';
+  return part || t('home.fallbackName');
 }
 
 export function formatDay(iso: string): string {

@@ -1,3 +1,8 @@
+import { GOAL_DELETED_NOTE, GOAL_DELETED_REASON, INR_SYMBOL, NAME_LIMIT, NOTE_LIMIT, PAISE_PER_RUPEE } from '../constants';
+import { t } from '../locale/messages';
+
+export { GOAL_DELETED_NOTE, NAME_LIMIT, NOTE_LIMIT };
+
 export type TxType = 'addition' | 'withdrawal' | 'transfer';
 
 export type GoalRecord = {
@@ -20,7 +25,7 @@ export type TxRecord = {
   note: string;
   goalId: string;
   counterGoalId: string | null;
-  lockedReason: 'goal_deleted' | null;
+  lockedReason: typeof GOAL_DELETED_REASON | null;
   createdAt: string;
 };
 
@@ -56,10 +61,6 @@ export type LedgerSuccess = { ok: true; state: LedgerState };
 export type LedgerFailure = { ok: false; error: string };
 export type LedgerResult = LedgerSuccess | LedgerFailure;
 
-export const GOAL_DELETED_NOTE = 'Removed when goal was deleted';
-export const NOTE_LIMIT = 100;
-export const NAME_LIMIT = 60;
-
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export function emptyLedger(): LedgerState {
@@ -69,10 +70,10 @@ export function emptyLedger(): LedgerState {
 export function formatInr(paise: number): string {
   const negative = paise < 0;
   const absolute = Math.abs(paise);
-  const rupees = Math.trunc(absolute / 100);
-  const fraction = absolute % 100;
+  const rupees = Math.trunc(absolute / PAISE_PER_RUPEE);
+  const fraction = absolute % PAISE_PER_RUPEE;
   const body = fraction === 0 ? groupIndian(String(rupees)) : `${groupIndian(String(rupees))}.${String(fraction).padStart(2, '0')}`;
-  return `${negative ? '-' : ''}₹${body}`;
+  return `${negative ? '-' : ''}${INR_SYMBOL}${body}`;
 }
 
 function groupIndian(whole: string): string {
@@ -86,14 +87,14 @@ export function parseRupees(input: string): number | null {
   const cleaned = input.replace(/,/g, '').trim();
   if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return null;
   const [whole, fraction = ''] = cleaned.split('.');
-  const paise = Number(whole) * 100 + Number((fraction + '00').slice(0, 2));
+  const paise = Number(whole) * PAISE_PER_RUPEE + Number((fraction + '00').slice(0, 2));
   if (!Number.isSafeInteger(paise) || paise < 0) return null;
   return paise;
 }
 
 export function paiseToInput(paise: number): string {
-  const rupees = Math.trunc(paise / 100);
-  const fraction = Math.abs(paise) % 100;
+  const rupees = Math.trunc(paise / PAISE_PER_RUPEE);
+  const fraction = Math.abs(paise) % PAISE_PER_RUPEE;
   return fraction === 0 ? String(rupees) : `${rupees}.${String(fraction).padStart(2, '0')}`;
 }
 
@@ -110,7 +111,7 @@ export function project(state: LedgerState): { ok: true; allocated: Map<string, 
     const amountError = assertAmount(tx.amountPaise);
     if (amountError) return fail(amountError);
     const goal = goals.get(tx.goalId);
-    if (!goal) return fail('That goal no longer exists.');
+    if (!goal) return fail(t('ledger.goalMissing'));
 
     if (tx.type === 'addition') {
       const next = (allocated.get(tx.goalId) ?? 0) + tx.amountPaise;
@@ -118,8 +119,8 @@ export function project(state: LedgerState): { ok: true; allocated: Map<string, 
         const room = goal.targetPaise - (allocated.get(tx.goalId) ?? 0);
         return fail(
           room <= 0
-            ? `${goal.name} has already reached its target. Raise the target before adding more.`
-            : `You can add up to ${formatInr(room)} before ${goal.name} reaches its target.`,
+            ? t('ledger.addFull', { name: goal.name })
+            : t('ledger.addRoom', { amount: formatInr(room), name: goal.name }),
         );
       }
       allocated.set(tx.goalId, next);
@@ -129,23 +130,23 @@ export function project(state: LedgerState): { ok: true; allocated: Map<string, 
     if (tx.type === 'withdrawal') {
       const available = allocated.get(tx.goalId) ?? 0;
       const next = available - tx.amountPaise;
-      if (next < 0) return fail(`${formatInr(available)} is available in ${goal.name}.`);
+      if (next < 0) return fail(t('ledger.available', { amount: formatInr(available), name: goal.name }));
       allocated.set(tx.goalId, next);
       continue;
     }
 
-    if (!tx.counterGoalId || tx.counterGoalId === tx.goalId) return fail('Choose two different goals.');
+    if (!tx.counterGoalId || tx.counterGoalId === tx.goalId) return fail(t('ledger.twoGoals'));
     const destination = goals.get(tx.counterGoalId);
-    if (!destination) return fail('That goal no longer exists.');
+    if (!destination) return fail(t('ledger.goalMissing'));
     const available = allocated.get(tx.goalId) ?? 0;
-    if (available < tx.amountPaise) return fail(`${formatInr(available)} is available in ${goal.name}.`);
+    if (available < tx.amountPaise) return fail(t('ledger.available', { amount: formatInr(available), name: goal.name }));
     const destNext = (allocated.get(tx.counterGoalId) ?? 0) + tx.amountPaise;
     if (destNext > destination.targetPaise) {
       const room = destination.targetPaise - (allocated.get(tx.counterGoalId) ?? 0);
       return fail(
         room <= 0
-          ? `${destination.name} has already reached its target.`
-          : `You can transfer up to ${formatInr(room)} into ${destination.name}.`,
+          ? t('ledger.transferFull', { name: destination.name })
+          : t('ledger.transferRoom', { amount: formatInr(room), name: destination.name }),
       );
     }
     allocated.set(tx.goalId, available - tx.amountPaise);
@@ -154,7 +155,7 @@ export function project(state: LedgerState): { ok: true; allocated: Map<string, 
 
   for (const goal of state.goals) {
     if (goal.deletedAt && (allocated.get(goal.id) ?? 0) !== 0) {
-      return fail(`${goal.name} was deleted and cannot hold a balance.`);
+      return fail(t('ledger.deletedBalance', { name: goal.name }));
     }
   }
 
@@ -175,7 +176,7 @@ export function reconciliationError(state: LedgerState, allocated: Map<string, n
     stored += amount;
     if (!goal.deletedAt) active += amount;
   }
-  if (stored !== active) return 'The ledger could not be reconciled.';
+  if (stored !== active) return t('error.reconcile');
   return null;
 }
 
@@ -203,15 +204,15 @@ export function validateGoalDraft(input: {
   allocatedPaise?: number;
 }): string | null {
   const name = input.name.trim();
-  if (!name) return 'Enter a goal name.';
-  if (name.length > NAME_LIMIT) return `Goal names can be up to ${NAME_LIMIT} characters.`;
-  if (!input.categoryId) return 'Choose a category.';
-  if (!Number.isInteger(input.targetPaise) || input.targetPaise <= 0) return 'Enter a target greater than zero.';
+  if (!name) return t('goal.nameRequired');
+  if (name.length > NAME_LIMIT) return t('ledger.nameLimit', { limit: NAME_LIMIT });
+  if (!input.categoryId) return t('common.chooseCategory');
+  if (!Number.isInteger(input.targetPaise) || input.targetPaise <= 0) return t('goal.targetRequired');
   const allocated = input.allocatedPaise ?? 0;
   if (input.targetPaise < allocated) {
-    return `The target cannot be lower than the ${formatInr(allocated)} already saved.`;
+    return t('ledger.targetMinimum', { amount: formatInr(allocated) });
   }
-  if (input.targetDate && !isRealDate(input.targetDate)) return 'Enter a valid target date.';
+  if (input.targetDate && !isRealDate(input.targetDate)) return t('ledger.targetDate');
   return null;
 }
 
@@ -221,7 +222,7 @@ export function applyAddition(
   clock: Clock,
 ): LedgerResult {
   const goal = state.goals.find((item) => item.id === input.goalId);
-  if (!goal || goal.deletedAt) return fail('Choose an active goal.');
+  if (!goal || goal.deletedAt) return fail(t('ledger.activeGoal'));
   const note = input.note.trim();
   const invalid = assertAmount(input.amountPaise) || assertDate(input.date, clock.today) || assertNote(note);
   if (invalid) return fail(invalid);
@@ -244,7 +245,7 @@ export function applyWithdrawal(
   clock: Clock,
 ): LedgerResult {
   const goal = state.goals.find((item) => item.id === input.goalId);
-  if (!goal || goal.deletedAt) return fail('Choose an active goal.');
+  if (!goal || goal.deletedAt) return fail(t('ledger.activeGoal'));
   const note = input.note.trim();
   const invalid = assertAmount(input.amountPaise) || assertDate(input.date, clock.today) || assertNote(note);
   if (invalid) return fail(invalid);
@@ -266,10 +267,10 @@ export function applyTransfer(
   input: { fromGoalId: string; toGoalId: string; amountPaise: number; date: string; note: string },
   clock: Clock,
 ): LedgerResult {
-  if (input.fromGoalId === input.toGoalId) return fail('Choose two different goals.');
+  if (input.fromGoalId === input.toGoalId) return fail(t('ledger.twoGoals'));
   const source = state.goals.find((item) => item.id === input.fromGoalId);
   const destination = state.goals.find((item) => item.id === input.toGoalId);
-  if (!source || source.deletedAt || !destination || destination.deletedAt) return fail('Choose two active goals.');
+  if (!source || source.deletedAt || !destination || destination.deletedAt) return fail(t('ledger.twoActive'));
   const note = input.note.trim();
   const invalid = assertAmount(input.amountPaise) || assertDate(input.date, clock.today) || assertNote(note);
   if (invalid) return fail(invalid);
@@ -299,7 +300,7 @@ export function applyEdit(
   clock: Clock,
 ): LedgerResult {
   const current = state.transactions.find((item) => item.id === input.transactionId);
-  if (!current) return fail('That transaction could not be found.');
+  if (!current) return fail(t('ledger.txMissing'));
 
   const amountPaise = input.amountPaise ?? current.amountPaise;
   const date = input.date ?? current.date;
@@ -307,9 +308,9 @@ export function applyEdit(
   const goalId = input.goalId ?? current.goalId;
   const counterGoalId = current.type === 'transfer' ? (input.counterGoalId === undefined ? current.counterGoalId : input.counterGoalId) : null;
 
-  if (current.lockedReason === 'goal_deleted') {
+  if (current.lockedReason === GOAL_DELETED_REASON) {
     if (amountPaise !== current.amountPaise || goalId !== current.goalId || counterGoalId !== current.counterGoalId) {
-      return fail('This withdrawal was recorded when the goal was deleted. Only the date and note can be changed.');
+      return fail(t('ledger.lockedEdit'));
     }
   }
 
@@ -318,14 +319,14 @@ export function applyEdit(
 
   if (goalId !== current.goalId) {
     const goal = state.goals.find((item) => item.id === goalId);
-    if (!goal || goal.deletedAt) return fail('Choose an active goal.');
+    if (!goal || goal.deletedAt) return fail(t('ledger.activeGoal'));
   }
   if (current.type === 'transfer') {
-    if (!counterGoalId) return fail('Choose a destination goal.');
-    if (counterGoalId === goalId) return fail('Choose two different goals.');
+    if (!counterGoalId) return fail(t('ledger.destination'));
+    if (counterGoalId === goalId) return fail(t('ledger.twoGoals'));
     if (counterGoalId !== current.counterGoalId) {
       const destination = state.goals.find((item) => item.id === counterGoalId);
-      if (!destination || destination.deletedAt) return fail('Choose an active goal.');
+      if (!destination || destination.deletedAt) return fail(t('ledger.activeGoal'));
     }
   }
 
@@ -354,7 +355,7 @@ export function applyGoalPatch(
   },
 ): LedgerResult {
   const goal = state.goals.find((item) => item.id === goalId);
-  if (!goal || goal.deletedAt) return fail('That goal could not be found.');
+  if (!goal || goal.deletedAt) return fail(t('ledger.goalNotFound'));
   const projected = project(state);
   if (!projected.ok) return projected;
   const draftError = validateGoalDraft({
@@ -387,7 +388,7 @@ export function applyGoalDeletion(
   clock: Clock,
 ): LedgerResult {
   const goal = state.goals.find((item) => item.id === input.goalId);
-  if (!goal || goal.deletedAt) return fail('That goal could not be found.');
+  if (!goal || goal.deletedAt) return fail(t('ledger.goalNotFound'));
   const projected = project(state);
   if (!projected.ok) return projected;
   const allocated = projected.allocated.get(goal.id) ?? 0;
@@ -400,7 +401,7 @@ export function applyGoalDeletion(
       note: GOAL_DELETED_NOTE,
       goalId: goal.id,
       counterGoalId: null,
-      lockedReason: 'goal_deleted',
+      lockedReason: GOAL_DELETED_REASON,
     }));
   }
   next.goals = next.goals.map((item) =>
@@ -419,12 +420,12 @@ export function applyGoalDeletion(
 function commit(state: LedgerState): LedgerResult {
   const seen = new Set<string>();
   for (const tx of state.transactions) {
-    if (seen.has(tx.id)) return fail('The ledger has a duplicate transaction.');
+    if (seen.has(tx.id)) return fail(t('ledger.duplicate'));
     seen.add(tx.id);
   }
   const projected = project(state);
   if (!projected.ok) return projected;
-  if (reconciliationError(state, projected.allocated)) return fail('The ledger could not be reconciled.');
+  if (reconciliationError(state, projected.allocated)) return fail(t('error.reconcile'));
   return { ok: true, state };
 }
 
@@ -462,18 +463,18 @@ function fail(error: string): LedgerFailure {
 }
 
 function assertAmount(amount: number): string | null {
-  if (!Number.isInteger(amount) || amount <= 0) return 'Enter an amount greater than zero.';
+  if (!Number.isInteger(amount) || amount <= 0) return t('money.amountRequired');
   return null;
 }
 
 function assertNote(note: string): string | null {
-  if (note.length > NOTE_LIMIT) return `Notes can be up to ${NOTE_LIMIT} characters.`;
+  if (note.length > NOTE_LIMIT) return t('money.noteLimit', { limit: NOTE_LIMIT });
   return null;
 }
 
 function assertDate(date: string, today: string): string | null {
-  if (!isRealDate(date)) return 'Enter a valid date.';
-  if (date > today) return 'The date cannot be in the future.';
+  if (!isRealDate(date)) return t('ledger.dateInvalid');
+  if (date > today) return t('ledger.dateFuture');
   return null;
 }
 

@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { t } from '../locale/messages';
 import { clearSession, loadSession, saveSession } from './storage';
 import type { SessionUser } from './types';
 
@@ -50,6 +51,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
 export function useSession(): SessionValue {
   const value = useContext(SessionContext);
-  if (!value) throw new Error('Session is unavailable.');
+  if (!value) throw new Error(t('auth.unavailable'));
   return value;
 }

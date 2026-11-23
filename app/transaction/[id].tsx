@@ -1,16 +1,19 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { GOAL_DELETED_REASON } from '../../src/constants';
 import { todayIso } from '../../src/domain/dates';
 import { NOTE_LIMIT, formatInr, paiseToInput, parseRupees } from '../../src/domain/ledger';
 import { ConfirmModal } from '../../src/components/ConfirmModal';
 import { DateField } from '../../src/components/DateField';
 import { Button, ErrorText, Field, Screen, ScreenHeader } from '../../src/components/ui';
 import { useBooks } from '../../src/data/useBooks';
+import { useText } from '../../src/locale';
 import { colors } from '../../src/theme/colors';
 import { fonts } from '../../src/theme/type';
 
 export default function EditTransactionScreen() {
+  const text = useText();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const txId = typeof id === 'string' ? id : '';
@@ -19,8 +22,8 @@ export default function EditTransactionScreen() {
   if (!tx) {
     return (
       <Screen>
-        <ScreenHeader title="Transaction" onBack={() => router.back()} />
-        <Text style={styles.missing}>That transaction could not be found.</Text>
+        <ScreenHeader title={text('tx.missingTitle')} onBack={() => router.back()} />
+        <Text style={styles.missing}>{text('tx.missing')}</Text>
       </Screen>
     );
   }
@@ -28,9 +31,10 @@ export default function EditTransactionScreen() {
 }
 
 function Editor({ tx }: { tx: NonNullable<ReturnType<typeof useBooks>['transactions'][number]> }) {
+  const text = useText();
   const router = useRouter();
   const books = useBooks();
-  const locked = tx.lockedReason === 'goal_deleted';
+  const locked = tx.lockedReason === GOAL_DELETED_REASON;
   const [amount, setAmount] = useState(paiseToInput(tx.amountPaise));
   const [date, setDate] = useState(tx.date);
   const [note, setNote] = useState(tx.note);
@@ -44,7 +48,7 @@ function Editor({ tx }: { tx: NonNullable<ReturnType<typeof useBooks>['transacti
   async function save() {
     const amountPaise = parseRupees(amount);
     if (amountPaise == null || amountPaise <= 0) {
-      setError('Enter an amount greater than zero.');
+      setError(text('money.amountRequired'));
       setConfirming(false);
       return;
     }
@@ -61,18 +65,18 @@ function Editor({ tx }: { tx: NonNullable<ReturnType<typeof useBooks>['transacti
       router.back();
     } catch (reason) {
       setConfirming(false);
-      setError(reason instanceof Error ? reason.message : 'The transaction could not be updated.');
+      setError(reason instanceof Error ? reason.message : text('tx.updateFailed'));
       setSaving(false);
     }
   }
 
   return (
-    <Screen footer={<Button label="Save correction" onPress={() => setConfirming(true)} disabled={saving} />}>
-      <ScreenHeader title="Edit transaction" onBack={() => router.back()} />
+    <Screen footer={<Button label={text('tx.save')} onPress={() => setConfirming(true)} disabled={saving} />}>
+      <ScreenHeader title={text('tx.editTitle')} onBack={() => router.back()} />
       <View style={styles.body}>
-        <Text style={styles.help}>Earlier values stay in the audit log. The transaction type stays the same.</Text>
-        {locked ? <Text style={styles.help}>This withdrawal was recorded when the goal was deleted. Only the date and note can change.</Text> : null}
-        <Field label="Amount">
+        <Text style={styles.help}>{text('tx.help')}</Text>
+        {locked ? <Text style={styles.help}>{text('tx.lockedHelp')}</Text> : null}
+        <Field label={text('money.amount')}>
           <TextInput
             value={amount}
             editable={!locked}
@@ -81,12 +85,12 @@ function Editor({ tx }: { tx: NonNullable<ReturnType<typeof useBooks>['transacti
             style={[styles.input, locked && styles.disabled]}
           />
         </Field>
-        <DateField label="Date" value={date} onChange={setDate} maximumDate={todayIso()} />
-        <Field label="Note">
+        <DateField label={text('money.date')} value={date} onChange={setDate} maximumDate={todayIso()} />
+        <Field label={text('money.notePlain')}>
           <TextInput value={note} onChangeText={(value) => setNote(value.slice(0, NOTE_LIMIT))} multiline style={styles.note} />
           <Text style={styles.count}>{note.length}/{NOTE_LIMIT}</Text>
         </Field>
-        <Field label={tx.type === 'transfer' ? 'From' : 'Goal'}>
+        <Field label={tx.type === 'transfer' ? text('money.from') : text('present.goal')}>
           <View style={styles.choices}>
             {(locked ? books.presented.filter((goal) => goal.id === tx.goalId) : active).map((goal) => (
               <Pressable key={goal.id} accessibilityRole="button" disabled={locked} onPress={() => setGoalId(goal.id)} style={[styles.choice, goalId === goal.id && styles.choiceOn]}>
@@ -96,7 +100,7 @@ function Editor({ tx }: { tx: NonNullable<ReturnType<typeof useBooks>['transacti
           </View>
         </Field>
         {tx.type === 'transfer' ? (
-          <Field label="To">
+          <Field label={text('money.to')}>
             <View style={styles.choices}>
               {active.filter((goal) => goal.id !== goalId).map((goal) => (
                 <Pressable key={goal.id} accessibilityRole="button" disabled={locked} onPress={() => setCounterGoalId(goal.id)} style={[styles.choice, counterGoalId === goal.id && styles.choiceOn]}>
@@ -110,9 +114,9 @@ function Editor({ tx }: { tx: NonNullable<ReturnType<typeof useBooks>['transacti
       </View>
       <ConfirmModal
         visible={confirming}
-        title="Save this correction?"
-        message={`The balance will be recalculated. The previous amount was ${formatInr(tx.amountPaise)}.`}
-        confirmLabel="Save"
+        title={text('tx.confirmTitle')}
+        message={text('tx.confirmMessage', { amount: formatInr(tx.amountPaise) })}
+        confirmLabel={text('common.save')}
         busy={saving}
         onCancel={() => setConfirming(false)}
         onConfirm={() => void save()}

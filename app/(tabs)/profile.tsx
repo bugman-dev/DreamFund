@@ -8,10 +8,12 @@ import { useSession } from '../../src/auth/session';
 import { ConfirmModal } from '../../src/components/ConfirmModal';
 import { Button, Card, ErrorText, Screen, Title } from '../../src/components/ui';
 import { useData } from '../../src/data/store';
+import { useText } from '../../src/locale';
 import { colors } from '../../src/theme/colors';
 import { fonts } from '../../src/theme/type';
 
 export default function ProfileScreen() {
+  const text = useText();
   const router = useRouter();
   const { user, signOut } = useSession();
   const data = useData();
@@ -25,7 +27,7 @@ export default function ProfileScreen() {
     try {
       await data.setReminder(enabled, data.preferences.reminderHour, data.preferences.reminderMinute);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'The reminder could not be saved.');
+      setError(reason instanceof Error ? reason.message : text('profile.reminderFailed'));
     }
   }
 
@@ -34,30 +36,30 @@ export default function ProfileScreen() {
     try {
       await data.setReminder(true, date.getHours(), date.getMinutes());
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'The reminder could not be saved.');
+      setError(reason instanceof Error ? reason.message : text('profile.reminderFailed'));
     }
   }
 
   return (
     <Screen>
-      <Title>Profile</Title>
+      <Title>{text('profile.title')}</Title>
       <Card style={styles.account}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initial}</Text>
         </View>
         <View style={styles.accountCopy}>
           <Text style={styles.accountName}>{user?.name}</Text>
-          <Text style={styles.accountEmail}>{user?.email || 'Google account'}</Text>
+          <Text style={styles.accountEmail}>{user?.email || text('profile.googleAccount')}</Text>
         </View>
       </Card>
-      <Text style={styles.group}>Preferences</Text>
-      <Row label="Currency" value="INR ₹" />
-      <Row label="Categories" onPress={() => router.push('/categories')} />
+      <Text style={styles.group}>{text('profile.preferences')}</Text>
+      <Row label={text('profile.currency')} value={text('profile.currencyValue')} />
+      <Row label={text('profile.categories')} onPress={() => router.push('/categories')} />
       {Platform.OS === 'web' ? null : (
         <View style={styles.row}>
           <View style={styles.rowCopy}>
-            <Text style={styles.rowLabel}>Daily reminder</Text>
-            <Text style={styles.rowValue}>{data.preferences.reminderEnabled ? formatClock(data.preferences.reminderHour, data.preferences.reminderMinute) : 'Off'}</Text>
+            <Text style={styles.rowLabel}>{text('profile.reminder')}</Text>
+            <Text style={styles.rowValue}>{data.preferences.reminderEnabled ? formatClock(data.preferences.reminderHour, data.preferences.reminderMinute) : text('profile.reminderOff')}</Text>
           </View>
           <Switch
             value={data.preferences.reminderEnabled}
@@ -68,7 +70,7 @@ export default function ProfileScreen() {
         </View>
       )}
       {Platform.OS !== 'web' && data.preferences.reminderEnabled ? (
-        <Row label="Reminder time" value={formatClock(data.preferences.reminderHour, data.preferences.reminderMinute)} onPress={() => setPickingTime(true)} />
+        <Row label={text('profile.reminderTime')} value={formatClock(data.preferences.reminderHour, data.preferences.reminderMinute)} onPress={() => setPickingTime(true)} />
       ) : null}
       {pickingTime && Platform.OS !== 'web' ? (
         <DateTimePicker
@@ -80,23 +82,23 @@ export default function ProfileScreen() {
           }}
         />
       ) : null}
-      <Text style={styles.group}>Data</Text>
-      <Row label="Export backup" onPress={() => void data.exportBackup().catch((reason: unknown) => setError(reason instanceof Error ? reason.message : 'The backup could not be exported.'))} />
-      <Row label="Import backup" onPress={() => setConfirming('import')} />
-      <Text style={styles.group}>About</Text>
+      <Text style={styles.group}>{text('profile.data')}</Text>
+      <Row label={text('profile.export')} onPress={() => void data.exportBackup().catch((reason: unknown) => setError(reason instanceof Error ? reason.message : text('profile.exportFailed')))} />
+      <Row label={text('profile.import')} onPress={() => setConfirming('import')} />
+      <Text style={styles.group}>{text('profile.about')}</Text>
       <Card style={styles.about}>
-        <Text style={styles.aboutTitle}>Dream Fund 1.0.0</Text>
-        <Text style={styles.aboutBody}>A personal savings allocation tracker. Dream Fund records how you set money aside. It does not hold or move real money.</Text>
+        <Text style={styles.aboutTitle}>{text('profile.version')}</Text>
+        <Text style={styles.aboutBody}>{text('profile.aboutBody')}</Text>
       </Card>
       {error ? <View style={styles.error}><ErrorText>{error}</ErrorText></View> : null}
       <View style={styles.signOut}>
-        <Button label="Sign out" tone="ghost" onPress={() => setConfirming('signout')} />
+        <Button label={text('profile.signOut')} tone="ghost" onPress={() => setConfirming('signout')} />
       </View>
       <ConfirmModal
         visible={confirming === 'signout'}
-        title="Sign out"
-        message="Your goals stay on this device for the next time this Google account signs in."
-        confirmLabel="Sign out"
+        title={text('profile.signOutTitle')}
+        message={text('profile.signOutMessage')}
+        confirmLabel={text('profile.signOut')}
         onCancel={() => setConfirming(null)}
         onConfirm={() => {
           setConfirming(null);
@@ -105,14 +107,14 @@ export default function ProfileScreen() {
       />
       <ConfirmModal
         visible={confirming === 'import'}
-        title="Restore a backup"
-        message="This replaces the goals and transactions stored on this device for your account."
-        confirmLabel="Choose file"
+        title={text('profile.restoreTitle')}
+        message={text('profile.restoreMessage')}
+        confirmLabel={text('profile.chooseFile')}
         tone="danger"
         onCancel={() => setConfirming(null)}
         onConfirm={() => {
           setConfirming(null);
-          void data.importBackup().catch((reason: unknown) => setError(reason instanceof Error ? reason.message : 'The backup could not be restored.'));
+          void data.importBackup().catch((reason: unknown) => setError(reason instanceof Error ? reason.message : text('profile.importFailed')));
         }}
       />
     </Screen>

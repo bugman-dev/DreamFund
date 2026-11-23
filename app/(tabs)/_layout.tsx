@@ -4,9 +4,11 @@ import { useSession } from '../../src/auth/session';
 import { DreamTabBar } from '../../src/components/TabBar';
 import { EmptyState, LoadingScreen } from '../../src/components/ui';
 import { useData } from '../../src/data/store';
+import { useText } from '../../src/locale';
 import { colors } from '../../src/theme/colors';
 
 export default function TabsLayout() {
+  const text = useText();
   const { user, ready } = useSession();
   const data = useData();
   if (ready && !user) return <Redirect href="/welcome" />;
@@ -14,10 +16,10 @@ export default function TabsLayout() {
   return (
     <View style={styles.host}>
       <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <DreamTabBar state={props.state} navigateToTab={props.navigateToTab} />}>
-        <Tabs.Screen name="index" options={{ title: 'Home' }} />
-        <Tabs.Screen name="goals" options={{ title: 'Goals' }} />
-        <Tabs.Screen name="transactions" options={{ title: 'Transactions' }} />
-        <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+        <Tabs.Screen name="index" options={{ title: text('tabs.home') }} />
+        <Tabs.Screen name="goals" options={{ title: text('tabs.goals') }} />
+        <Tabs.Screen name="transactions" options={{ title: text('tabs.transactions') }} />
+        <Tabs.Screen name="profile" options={{ title: text('tabs.profile') }} />
       </Tabs>
       {waiting ? (
         <View style={styles.cover}>
@@ -26,7 +28,7 @@ export default function TabsLayout() {
       ) : null}
       {!waiting && data.error ? (
         <View style={styles.cover}>
-          <EmptyState title="Records could not be opened" body={data.error} action="Try again" onAction={() => void data.refresh()} />
+          <EmptyState title={text('records.couldNotOpen')} body={data.error} action={text('records.tryAgain')} onAction={() => void data.refresh()} />
         </View>
       ) : null}
     </View>

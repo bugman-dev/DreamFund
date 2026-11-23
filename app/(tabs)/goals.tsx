@@ -5,10 +5,12 @@ import { Search } from 'lucide-react-native';
 import { GoalCard } from '../../src/components/GoalCard';
 import { EmptyState, FilterChip, Screen, Title } from '../../src/components/ui';
 import { useBooks } from '../../src/data/useBooks';
+import { useText } from '../../src/locale';
 import { colors } from '../../src/theme/colors';
 import { fonts } from '../../src/theme/type';
 
 export default function GoalsScreen() {
+  const text = useText();
   const router = useRouter();
   const books = useBooks();
   const [categoryId, setCategoryId] = useState('all');
@@ -27,8 +29,8 @@ export default function GoalsScreen() {
   return (
     <Screen>
       <View style={styles.header}>
-        <Title>Goals</Title>
-        <Pressable accessibilityRole="button" accessibilityLabel="Search goals" onPress={() => setSearching((value) => !value)} style={styles.searchButton}>
+        <Title>{text('goals.title')}</Title>
+        <Pressable accessibilityRole="button" accessibilityLabel={text('goals.search')} onPress={() => setSearching((value) => !value)} style={styles.searchButton}>
           <Search color={colors.forest} size={20} />
         </Pressable>
       </View>
@@ -36,23 +38,23 @@ export default function GoalsScreen() {
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="Search goals"
+          placeholder={text('goals.search')}
           placeholderTextColor={colors.muted}
           style={styles.search}
           autoFocus
         />
       ) : null}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
-        <FilterChip label="All" selected={categoryId === 'all'} onPress={() => setCategoryId('all')} />
+        <FilterChip label={text('common.all')} selected={categoryId === 'all'} onPress={() => setCategoryId('all')} />
         {books.categories.map((category) => (
           <FilterChip key={category.id} label={category.name} selected={categoryId === category.id} onPress={() => setCategoryId(category.id)} />
         ))}
       </ScrollView>
       {goals.length === 0 ? (
         <EmptyState
-          title={categoryId === 'all' ? 'No goals yet' : `No ${categoryName ?? 'category'} goals`}
-          body="Finished goals stay in their category, so this list is only empty when nothing has been saved here."
-          action="Create a goal"
+          title={categoryId === 'all' ? text('goals.emptyAll') : text('goals.emptyCategory', { category: categoryName ?? text('present.category') })}
+          body={text('goals.emptyBody')}
+          action={text('home.createGoal')}
           onAction={() => router.push('/goal/create')}
         />
       ) : (

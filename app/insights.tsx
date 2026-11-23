@@ -2,21 +2,24 @@ import { useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import Svg, { Circle } from 'react-native-svg';
+import { PERCENT_MAX } from '../src/constants';
 import { periodStart, todayIso, type Period } from '../src/domain/dates';
 import { formatInr, netSaved } from '../src/domain/ledger';
 import { accentFor } from '../src/theme/colors';
 import { EmptyState, FilterChip, LoadingScreen, Screen, ScreenHeader } from '../src/components/ui';
 import { useBooks } from '../src/data/useBooks';
+import { useText, type MessageId } from '../src/locale';
 import { colors } from '../src/theme/colors';
 import { fonts } from '../src/theme/type';
 
-const PERIODS: { id: Period; label: string }[] = [
-  { id: 'month', label: 'This Month' },
-  { id: 'year', label: 'This Year' },
-  { id: 'all', label: 'All Time' },
+const PERIODS: { id: Period; label: MessageId }[] = [
+  { id: 'month', label: 'insights.month' },
+  { id: 'year', label: 'insights.year' },
+  { id: 'all', label: 'insights.all' },
 ];
 
 export default function InsightsScreen() {
+  const text = useText();
   const router = useRouter();
   const books = useBooks();
   const [period, setPeriod] = useState<Period>('month');
@@ -33,39 +36,39 @@ export default function InsightsScreen() {
 
   return (
     <Screen>
-      <ScreenHeader title="Insights" onBack={() => router.back()} />
+      <ScreenHeader title={text('insights.title')} onBack={() => router.back()} />
       <View style={styles.filters}>
         {PERIODS.map((item) => (
-          <FilterChip key={item.id} label={item.label} selected={period === item.id} onPress={() => setPeriod(item.id)} />
+          <FilterChip key={item.id} label={text(item.label)} selected={period === item.id} onPress={() => setPeriod(item.id)} />
         ))}
       </View>
       {!books.ready ? (
         <LoadingScreen />
       ) : books.active.length === 0 ? (
-        <EmptyState title="Nothing to chart yet" body="Create a goal and record what you have set aside." action="Create a goal" onAction={() => router.push('/goal/create')} />
+        <EmptyState title={text('insights.emptyTitle')} body={text('insights.emptyBody')} action={text('home.createGoal')} onAction={() => router.push('/goal/create')} />
       ) : (
         <>
           <View style={styles.stats}>
             <View style={styles.stat}>
-              <Text style={styles.statLabel}>Saved</Text>
+              <Text style={styles.statLabel}>{text('insights.saved')}</Text>
               <Text style={[styles.statValue, saved < 0 && styles.negative]}>{formatInr(saved)}</Text>
             </View>
             <View style={styles.stat}>
-              <Text style={styles.statLabel}>Goals</Text>
+              <Text style={styles.statLabel}>{text('insights.goals')}</Text>
               <Text style={styles.statValue}>{books.active.length}</Text>
             </View>
           </View>
-          <Text style={styles.section}>Allocation by category</Text>
-          <Text style={styles.caption}>Saved is the net added in this period. The chart is what is set aside now.</Text>
+          <Text style={styles.section}>{text('insights.section')}</Text>
+          <Text style={styles.caption}>{text('insights.caption')}</Text>
           <View style={styles.chartCard}>
-            <Donut slices={slices} total={books.saved} />
+            <Donut slices={slices} total={books.saved} caption={text('insights.allocated')} />
             <View style={styles.legend}>
-              {slices.length === 0 ? <Text style={styles.caption}>Add money to see the split.</Text> : null}
+              {slices.length === 0 ? <Text style={styles.caption}>{text('insights.emptySplit')}</Text> : null}
               {slices.map((slice) => (
                 <View key={slice.name} style={styles.legendRow}>
                   <View style={[styles.swatch, { backgroundColor: slice.color }]} />
                   <Text style={styles.legendName}>{slice.name}</Text>
-                  <Text style={styles.legendValue}>{books.saved ? Math.round((slice.value / books.saved) * 100) : 0}%</Text>
+                  <Text style={styles.legendValue}>{books.saved ? Math.round((slice.value / books.saved) * PERCENT_MAX) : 0}%</Text>
                 </View>
               ))}
             </View>
@@ -76,7 +79,7 @@ export default function InsightsScreen() {
   );
 }
 
-function Donut({ slices, total }: { slices: { value: number; color: string }[]; total: number }) {
+function Donut({ slices, total, caption }: { slices: { value: number; color: string }[]; total: number; caption: string }) {
   const radius = 54;
   const circumference = 2 * Math.PI * radius;
   let offset = 0;
@@ -108,7 +111,7 @@ function Donut({ slices, total }: { slices: { value: number; color: string }[]; 
       </Svg>
       <View style={styles.donutLabel}>
         <Text style={styles.donutAmount}>{formatInr(total)}</Text>
-        <Text style={styles.donutCaption}>Allocated</Text>
+        <Text style={styles.donutCaption}>{caption}</Text>
       </View>
     </View>
   );

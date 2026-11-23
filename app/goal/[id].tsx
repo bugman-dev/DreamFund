@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, Ellipsis, Minus, Plus } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
+import { PERCENT_MAX } from '../../src/constants';
 import { daysUntil, formatDay, todayIso } from '../../src/domain/dates';
 import { compareTransactions, formatInr } from '../../src/domain/ledger';
 import { transactionTitle } from '../../src/data/present';
@@ -11,10 +12,12 @@ import { ConfirmModal } from '../../src/components/ConfirmModal';
 import { GoalImage } from '../../src/components/GoalImage';
 import { Button, CategoryChip, EmptyState } from '../../src/components/ui';
 import { useBooks } from '../../src/data/useBooks';
+import { useText } from '../../src/locale';
 import { colors } from '../../src/theme/colors';
 import { fonts } from '../../src/theme/type';
 
 export default function GoalDetailsScreen() {
+  const text = useText();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -32,7 +35,7 @@ export default function GoalDetailsScreen() {
   if (!goal) {
     return (
       <View style={styles.missing}>
-        <EmptyState title="Goal not found" body="It may have been deleted. Its transactions remain in history." action="Back to goals" onAction={() => router.back()} />
+        <EmptyState title={text('goal.notFoundTitle')} body={text('goal.notFoundBody')} action={text('goal.backToGoals')} onAction={() => router.back()} />
       </View>
     );
   }
@@ -46,7 +49,7 @@ export default function GoalDetailsScreen() {
       router.back();
     } catch (reason) {
       setConfirming(false);
-      setError(reason instanceof Error ? reason.message : 'The goal could not be deleted.');
+      setError(reason instanceof Error ? reason.message : text('goal.deleteFailed'));
     }
   }
 
@@ -55,43 +58,43 @@ export default function GoalDetailsScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 96 }}>
         <GoalImage uri={goal.imageUri} style={styles.hero} iconSize={64} />
         <View style={[styles.toolbar, { top: insets.top + 8 }]}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={styles.round}>
+          <Pressable accessibilityRole="button" accessibilityLabel={text('common.back')} onPress={() => router.back()} style={styles.round}>
             <ChevronLeft color={colors.ink} size={22} />
           </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel="Goal actions" onPress={() => setMenu(true)} style={styles.round}>
+          <Pressable accessibilityRole="button" accessibilityLabel={text('goal.actions')} onPress={() => setMenu(true)} style={styles.round}>
             <Ellipsis color={colors.ink} size={20} />
           </Pressable>
         </View>
         <View style={styles.card}>
           <CategoryChip name={goal.categoryName} icon={goal.categoryIcon} accent={goal.accent} />
           <Text style={styles.name}>{goal.name}</Text>
-          {goal.completed ? <Text style={styles.completed}>Completed</Text> : null}
+          {goal.completed ? <Text style={styles.completed}>{text('common.completed')}</Text> : null}
           <View style={styles.figures}>
             <View style={styles.figureCopy}>
               <Text style={styles.amount}>{formatInr(goal.allocatedPaise)}</Text>
-              <Text style={styles.of}>of {formatInr(goal.targetPaise)}</Text>
-              <Text style={styles.remaining}>{formatInr(goal.remainingPaise)} remaining</Text>
+              <Text style={styles.of}>{text('home.ofAmount', { amount: formatInr(goal.targetPaise) })}</Text>
+              <Text style={styles.remaining}>{text('common.remaining', { amount: formatInr(goal.remainingPaise) })}</Text>
             </View>
             <Ring progress={goal.progress} />
           </View>
           <View style={styles.meta}>
             <View style={styles.metaTile}>
-              <Text style={styles.metaLabel}>Target date</Text>
-              <Text style={styles.metaValue}>{goal.targetDate ? formatDay(goal.targetDate) : 'Not set'}</Text>
+              <Text style={styles.metaLabel}>{text('goal.targetDateLabel')}</Text>
+              <Text style={styles.metaValue}>{goal.targetDate ? formatDay(goal.targetDate) : text('common.notSet')}</Text>
             </View>
             <View style={styles.metaTile}>
-              <Text style={styles.metaLabel}>Days left</Text>
-              <Text style={styles.metaValue}>{days == null ? '—' : days < 0 ? 'Passed' : String(days)}</Text>
+              <Text style={styles.metaLabel}>{text('goal.daysLeft')}</Text>
+              <Text style={styles.metaValue}>{days == null ? '—' : days < 0 ? text('common.passed') : String(days)}</Text>
             </View>
           </View>
         </View>
         <View style={styles.activityHeader}>
-          <Text style={styles.activityTitle}>Recent Activity</Text>
+          <Text style={styles.activityTitle}>{text('goal.recent')}</Text>
           <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/(tabs)/transactions', params: { goalId: goal.id } })}>
-            <Text style={styles.seeAll}>See all</Text>
+            <Text style={styles.seeAll}>{text('home.seeAll')}</Text>
           </Pressable>
         </View>
-        {activity.length === 0 ? <Text style={styles.quiet}>No money has been recorded for this goal yet.</Text> : null}
+        {activity.length === 0 ? <Text style={styles.quiet}>{text('goal.noActivity')}</Text> : null}
         {activity.map((tx) => {
           const outgoing = tx.type === 'withdrawal' || (tx.type === 'transfer' && tx.goalId === goalId);
           return (
@@ -113,10 +116,10 @@ export default function GoalDetailsScreen() {
       </ScrollView>
       <View style={[styles.actions, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         <View style={styles.action}>
-          <Button label="Withdraw" tone="danger" onPress={() => router.push({ pathname: '/money/withdraw', params: { goalId: goal.id } })} />
+          <Button label={text('goal.withdraw')} tone="danger" onPress={() => router.push({ pathname: '/money/withdraw', params: { goalId: goal.id } })} />
         </View>
         <View style={styles.action}>
-          <Button label="Add Money" onPress={() => router.push({ pathname: '/money/add', params: { goalId: goal.id } })} />
+          <Button label={text('goal.addMoney')} onPress={() => router.push({ pathname: '/money/add', params: { goalId: goal.id } })} />
         </View>
       </View>
       {menu ? (
@@ -124,24 +127,24 @@ export default function GoalDetailsScreen() {
           <Pressable style={styles.menuBackdrop} onPress={() => setMenu(false)} />
           <View style={[styles.menu, { top: insets.top + 58 }]}>
             <Pressable accessibilityRole="button" onPress={() => { setMenu(false); router.push(`/goal/edit/${goal.id}`); }} style={styles.menuItem}>
-              <Text style={styles.menuText}>Edit goal</Text>
+              <Text style={styles.menuText}>{text('goal.edit')}</Text>
             </Pressable>
             <Pressable accessibilityRole="button" onPress={() => { setMenu(false); router.push({ pathname: '/money/transfer', params: { goalId: goal.id } }); }} style={styles.menuItem}>
-              <Text style={styles.menuText}>Transfer</Text>
+              <Text style={styles.menuText}>{text('goal.transfer')}</Text>
             </Pressable>
             <Pressable accessibilityRole="button" onPress={() => { setMenu(false); setConfirming(true); }} style={styles.menuItem}>
-              <Text style={styles.menuDanger}>Delete goal</Text>
+              <Text style={styles.menuDanger}>{text('goal.delete')}</Text>
             </Pressable>
           </View>
         </View>
       ) : null}
       <ConfirmModal
         visible={confirming}
-        title={`Delete ${goal.name}?`}
+        title={text('goal.deleteTitle', { name: goal.name })}
         message={goal.allocatedPaise > 0
-          ? `This records a withdrawal of ${formatInr(goal.allocatedPaise)} and removes the goal. Its history stays in Transactions.`
-          : 'Its history stays in Transactions.'}
-        confirmLabel="Delete goal"
+          ? text('goal.deleteFunded', { amount: formatInr(goal.allocatedPaise) })
+          : text('goal.deleteEmpty')}
+        confirmLabel={text('goal.delete')}
         tone="danger"
         onCancel={() => setConfirming(false)}
         onConfirm={() => void remove()}
@@ -153,7 +156,7 @@ export default function GoalDetailsScreen() {
 function Ring({ progress }: { progress: number }) {
   const radius = 28;
   const circumference = 2 * Math.PI * radius;
-  const dash = (progress / 100) * circumference;
+  const dash = (progress / PERCENT_MAX) * circumference;
   return (
     <View style={styles.ring}>
       <Svg width={72} height={72}>

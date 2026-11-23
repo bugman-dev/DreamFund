@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { PERCENT_MAX } from '../constants';
 import { presentGoal } from './present';
 import { useData } from './store';
 
@@ -15,7 +16,7 @@ export function useBooks() {
       active,
       saved,
       target,
-      progress: target > 0 ? Math.min(100, Math.round((saved / target) * 100)) : 0,
+      progress: target > 0 ? Math.min(PERCENT_MAX, Math.round((saved / target) * PERCENT_MAX)) : 0,
     };
   }, [data]);
 }

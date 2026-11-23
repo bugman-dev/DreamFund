@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { House, Plus, Receipt, Target, User } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useText, type MessageId } from '../locale';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/type';
 import { useActions } from './ActionSheet';
@@ -10,15 +11,16 @@ type DreamTabBarProps = {
   navigateToTab: (routeKey: string) => void;
 };
 
-const ITEMS = [
-  { name: 'index', label: 'Home', Icon: House },
-  { name: 'goals', label: 'Goals', Icon: Target },
-  { name: 'plus', label: '', Icon: Plus },
-  { name: 'transactions', label: 'Transactions', Icon: Receipt },
-  { name: 'profile', label: 'Profile', Icon: User },
+const ITEMS: { name: string; label: MessageId | null; Icon: typeof House }[] = [
+  { name: 'index', label: 'tabs.home', Icon: House },
+  { name: 'goals', label: 'tabs.goals', Icon: Target },
+  { name: 'plus', label: null, Icon: Plus },
+  { name: 'transactions', label: 'tabs.transactions', Icon: Receipt },
+  { name: 'profile', label: 'tabs.profile', Icon: User },
 ];
 
 export function DreamTabBar({ state, navigateToTab }: DreamTabBarProps) {
+  const text = useText();
   const insets = useSafeAreaInsets();
   const { openActions } = useActions();
   const current = state.routes[state.index]?.name;
@@ -28,7 +30,7 @@ export function DreamTabBar({ state, navigateToTab }: DreamTabBarProps) {
       {ITEMS.map((item) => {
         if (item.name === 'plus') {
           return (
-            <Pressable key="plus" accessibilityRole="button" accessibilityLabel="Create" onPress={openActions} style={styles.plusWrap}>
+            <Pressable key="plus" accessibilityRole="button" accessibilityLabel={text('common.create')} onPress={openActions} style={styles.plusWrap}>
               <View style={styles.plus}>
                 <Plus color={colors.white} size={28} strokeWidth={2.4} />
               </View>
@@ -41,7 +43,7 @@ export function DreamTabBar({ state, navigateToTab }: DreamTabBarProps) {
           <Pressable
             key={item.name}
             accessibilityRole="button"
-            accessibilityLabel={item.label}
+            accessibilityLabel={item.label ? text(item.label) : undefined}
             onPress={() => {
               const route = state.routes.find((entry) => entry.name === item.name);
               if (route) navigateToTab(route.key);
@@ -49,7 +51,7 @@ export function DreamTabBar({ state, navigateToTab }: DreamTabBarProps) {
             style={styles.item}
           >
             <item.Icon color={color} size={22} strokeWidth={selected ? 2.4 : 2} />
-            <Text style={[styles.label, { color }]}>{item.label}</Text>
+            <Text style={[styles.label, { color }]}>{item.label ? text(item.label) : ''}</Text>
           </Pressable>
         );
       })}

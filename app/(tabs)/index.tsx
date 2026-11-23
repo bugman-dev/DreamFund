@@ -7,17 +7,19 @@ import { useSession } from '../../src/auth/session';
 import { GoalCard } from '../../src/components/GoalCard';
 import { EmptyState, ProgressBar, Screen, SectionLabel } from '../../src/components/ui';
 import { useBooks } from '../../src/data/useBooks';
+import { useText, type MessageId } from '../../src/locale';
 import { colors } from '../../src/theme/colors';
 import { fonts } from '../../src/theme/type';
 
-const ACTIONS = [
-  { label: 'Add Money', href: '/money/add', Icon: Plus },
-  { label: 'Withdraw', href: '/money/withdraw', Icon: Minus },
-  { label: 'New Goal', href: '/goal/create', Icon: Target },
-  { label: 'Insights', href: '/insights', Icon: PieChart },
-] as const;
+const ACTIONS: { label: MessageId; href: '/money/add' | '/money/withdraw' | '/goal/create' | '/insights'; Icon: typeof Plus }[] = [
+  { label: 'home.addMoney', href: '/money/add', Icon: Plus },
+  { label: 'home.withdraw', href: '/money/withdraw', Icon: Minus },
+  { label: 'home.newGoal', href: '/goal/create', Icon: Target },
+  { label: 'home.insights', href: '/insights', Icon: PieChart },
+];
 
 export default function HomeScreen() {
+  const text = useText();
   const router = useRouter();
   const { user } = useSession();
   const books = useBooks();
@@ -28,36 +30,36 @@ export default function HomeScreen() {
           <Text style={styles.greeting}>{greeting()},</Text>
           <Text style={styles.name}>{firstName(user?.name ?? '')}</Text>
         </View>
-        <Pressable accessibilityRole="button" accessibilityLabel="Profile" onPress={() => router.push('/(tabs)/profile')} style={styles.bell}>
+        <Pressable accessibilityRole="button" accessibilityLabel={text('home.profile')} onPress={() => router.push('/(tabs)/profile')} style={styles.bell}>
           <Bell color={colors.forest} size={20} />
         </Pressable>
       </View>
       <View style={styles.summary}>
-        <Text style={styles.summaryLabel}>Total Saved</Text>
+        <Text style={styles.summaryLabel}>{text('home.totalSaved')}</Text>
         <Text style={styles.summaryAmount}>{formatInr(books.saved)}</Text>
         <View style={styles.summaryMeta}>
-          <Text style={styles.summaryOf}>of {formatInr(books.target)}</Text>
+          <Text style={styles.summaryOf}>{text('home.ofAmount', { amount: formatInr(books.target) })}</Text>
           <Text style={styles.summaryPercent}>{books.progress}%</Text>
         </View>
         <ProgressBar progress={books.progress} />
-        <Text style={styles.goalCount}>{books.active.length === 1 ? '1 goal' : `${books.active.length} goals`}</Text>
+        <Text style={styles.goalCount}>{text('home.goalCount', { count: books.active.length })}</Text>
       </View>
       <View style={styles.actions}>
         {ACTIONS.map((action) => (
-          <Pressable key={action.href} accessibilityRole="button" accessibilityLabel={action.label} style={styles.action} onPress={() => router.push(action.href)}>
+          <Pressable key={action.href} accessibilityRole="button" accessibilityLabel={text(action.label)} style={styles.action} onPress={() => router.push(action.href)}>
             <View style={styles.actionIcon}>
               <action.Icon color={colors.forest} size={20} />
             </View>
-            <Text style={styles.actionLabel}>{action.label}</Text>
+            <Text style={styles.actionLabel}>{text(action.label)}</Text>
           </Pressable>
         ))}
       </View>
-      <SectionLabel children="My Goals" action={books.active.length ? 'See all' : undefined} onAction={() => router.push('/(tabs)/goals')} />
+      <SectionLabel children={text('home.myGoals')} action={books.active.length ? text('home.seeAll') : undefined} onAction={() => router.push('/(tabs)/goals')} />
       {books.active.length === 0 ? (
         <EmptyState
-          title="Start your first goal"
-          body="Dream Fund keeps one savings picture across the things you are planning. Money stays in your real account."
-          action="Create a goal"
+          title={text('home.emptyTitle')}
+          body={text('home.emptyBody')}
+          action={text('home.createGoal')}
           onAction={() => router.push('/goal/create')}
         />
       ) : (

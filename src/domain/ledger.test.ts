@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { GOAL_DELETED_REASON, PRESET_IMAGE_PREFIX } from '../constants.ts';
 import {
   applyAddition,
   applyEdit,
@@ -36,7 +37,7 @@ function goal(overrides: Partial<GoalRecord> = {}): GoalRecord {
     categoryId: 'home',
     targetPaise: 4_000_000,
     targetDate: '2027-04-01',
-    imageUri: 'preset:home',
+    imageUri: `${PRESET_IMAGE_PREFIX}home`,
     deletedAt: null,
     categorySnapshot: null,
     categoryIconSnapshot: null,
@@ -253,7 +254,7 @@ test('deleting a funded goal posts a withdrawal, hides the balance, and lowers t
   assert.equal(deleted.categorySnapshot, 'Home & Living');
   assert.equal(allocated(state, 'dishwasher'), 0);
   assert.equal(saved(state), 0);
-  const withdrawal = state.transactions.find((tx) => tx.lockedReason === 'goal_deleted');
+  const withdrawal = state.transactions.find((tx) => tx.lockedReason === GOAL_DELETED_REASON);
   assert.ok(withdrawal);
   assert.equal(withdrawal?.amountPaise, 2_500_000);
   assert.equal(withdrawal?.note, GOAL_DELETED_NOTE);
@@ -322,7 +323,7 @@ test('a deletion withdrawal can change its note and date, not its amount', () =>
     categoryName: 'Home & Living',
     categoryIcon: 'House',
   }, clock()));
-  const locked = state.transactions.find((tx) => tx.lockedReason === 'goal_deleted');
+  const locked = state.transactions.find((tx) => tx.lockedReason === GOAL_DELETED_REASON);
   assert.ok(locked);
   const blocked = applyEdit(state, { transactionId: locked!.id, amountPaise: 50_000 }, clock());
   assert.equal(blocked.ok, false);

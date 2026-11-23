@@ -1,4 +1,6 @@
 import * as WebBrowser from 'expo-web-browser';
+import { PREVIEW_USER } from '../constants';
+import { t } from '../locale/messages';
 import type { SessionUser } from './types';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -8,26 +10,21 @@ export const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.t
 export const googleAndroidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID?.trim() || googleWebClientId;
 export const googleConfigured = googleWebClientId.length > 0;
 
-export const previewUser: SessionUser = {
-  sub: 'preview-thejus',
-  name: 'Thejus',
-  email: 'thejus@dreamfund.app',
-  photoUrl: null,
-};
+export const previewUser: SessionUser = PREVIEW_USER;
 
 export function profileFromIdToken(idToken: string): SessionUser {
   const payload = idToken.split('.')[1];
-  if (!payload) throw new Error('Google did not return an account.');
+  if (!payload) throw new Error(t('welcome.googleNoAccount'));
   const json = JSON.parse(decodeBase64Url(payload)) as {
     sub?: string;
     name?: string;
     email?: string;
     picture?: string;
   };
-  if (!json.sub) throw new Error('Google did not return an account.');
+  if (!json.sub) throw new Error(t('welcome.googleNoAccount'));
   return {
     sub: json.sub,
-    name: json.name || json.email || 'Member',
+    name: json.name || json.email || t('auth.member'),
     email: json.email || '',
     photoUrl: json.picture || null,
   };

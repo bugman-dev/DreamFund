@@ -3,6 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { Check, Search, X } from 'lucide-react-native';
 import { ICON_NAMES } from '../domain/icons';
 import { useData } from '../data/store';
+import { useText } from '../locale';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/type';
 import { AppIcon } from './icons';
@@ -19,6 +20,7 @@ export function CategorySheet({
   onClose: () => void;
   onSelect: (id: string) => void;
 }) {
+  const text = useText();
   const data = useData();
   const [query, setQuery] = useState('');
   const [name, setName] = useState('');
@@ -38,7 +40,7 @@ export function CategorySheet({
       setName('');
       onSelect(created.id);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'The category could not be created.');
+      setError(reason instanceof Error ? reason.message : text('category.createFailed'));
     } finally {
       setSaving(false);
     }
@@ -48,10 +50,10 @@ export function CategorySheet({
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.screen}>
         <View style={styles.header}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Close" onPress={onClose} style={styles.iconButton}>
+          <Pressable accessibilityRole="button" accessibilityLabel={text('common.close')} onPress={onClose} style={styles.iconButton}>
             <X color={colors.ink} size={22} />
           </Pressable>
-          <Text style={styles.title}>Select Category</Text>
+          <Text style={styles.title}>{text('category.select')}</Text>
           <View style={styles.iconButton} />
         </View>
         <View style={styles.search}>
@@ -59,7 +61,7 @@ export function CategorySheet({
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder="Search or add category..."
+            placeholder={text('category.search')}
             placeholderTextColor={colors.muted}
             style={styles.searchInput}
           />
@@ -77,15 +79,15 @@ export function CategorySheet({
               </Pressable>
             );
           })}
-          <Text style={styles.addTitle}>Add New Category</Text>
+          <Text style={styles.addTitle}>{text('category.addTitle')}</Text>
           <TextInput
             value={name}
             onChangeText={setName}
-            placeholder="Fitness"
+            placeholder={text('category.namePlaceholder')}
             placeholderTextColor={colors.muted}
             style={styles.nameInput}
           />
-          <Text style={styles.choose}>Choose icon</Text>
+          <Text style={styles.choose}>{text('category.chooseIcon')}</Text>
           <View style={styles.icons}>
             {ICON_NAMES.map((item) => (
               <Pressable
@@ -100,7 +102,7 @@ export function CategorySheet({
             ))}
           </View>
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          <Button label={name.trim() ? `Add "${name.trim()}"` : 'Add category'} onPress={addCategory} disabled={saving || !name.trim()} />
+          <Button label={name.trim() ? text('category.addNamed', { name: name.trim() }) : text('categories.add')} onPress={addCategory} disabled={saving || !name.trim()} />
         </ScrollView>
       </View>
     </Modal>

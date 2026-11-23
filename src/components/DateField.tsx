@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Calendar } from 'lucide-react-native';
 import { formatDay } from '../domain/dates';
+import { useText } from '../locale';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/type';
 import { Button, Field } from './ui';
@@ -20,6 +21,7 @@ export function DateField({
   maximumDate?: string;
   optional?: boolean;
 }) {
+  const text = useText();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(value || todayFromDevice());
   const selected = value ? parseIso(value) : new Date();
@@ -32,12 +34,12 @@ export function DateField({
   return (
     <Field label={label}>
       <Pressable accessibilityRole="button" onPress={() => { setDraft(value || todayFromDevice()); setOpen(true); }} style={styles.row}>
-        <Text style={[styles.value, !value && styles.placeholder]}>{value ? formatDay(value) : optional ? 'Optional' : 'Choose a date'}</Text>
+        <Text style={[styles.value, !value && styles.placeholder]}>{value ? formatDay(value) : optional ? text('common.optional') : text('common.chooseDate')}</Text>
         <Calendar color={colors.forest} size={18} />
       </Pressable>
       {optional && value ? (
         <Pressable accessibilityRole="button" onPress={() => onChange('')} hitSlop={6}>
-          <Text style={styles.clear}>Clear date</Text>
+          <Text style={styles.clear}>{text('common.clearDate')}</Text>
         </Pressable>
       ) : null}
       {Platform.OS === 'android' && open ? (
@@ -64,7 +66,7 @@ export function DateField({
                   if (date) setDraft(toIso(date));
                 }}
               />
-              <Button label="Done" onPress={() => { commit(parseIso(draft)); setOpen(false); }} />
+              <Button label={text('common.done')} onPress={() => { commit(parseIso(draft)); setOpen(false); }} />
             </View>
           </View>
         </Modal>

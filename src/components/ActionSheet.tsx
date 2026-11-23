@@ -3,6 +3,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeftRight, Minus, Plus, Target } from 'lucide-react-native';
+import { useText, type MessageId } from '../locale';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/type';
 
@@ -12,14 +13,15 @@ export function useActions() {
   return useContext(ActionsContext);
 }
 
-const ACTIONS = [
-  { href: '/money/add', label: 'Add Money', Icon: Plus },
-  { href: '/money/withdraw', label: 'Withdraw', Icon: Minus },
-  { href: '/goal/create', label: 'New Goal', Icon: Target },
-  { href: '/money/transfer', label: 'Transfer', Icon: ArrowLeftRight },
-] as const;
+const ACTIONS: { href: '/money/add' | '/money/withdraw' | '/goal/create' | '/money/transfer'; label: MessageId; Icon: typeof Plus }[] = [
+  { href: '/money/add', label: 'actions.addMoney', Icon: Plus },
+  { href: '/money/withdraw', label: 'actions.withdraw', Icon: Minus },
+  { href: '/goal/create', label: 'actions.newGoal', Icon: Target },
+  { href: '/money/transfer', label: 'actions.transfer', Icon: ArrowLeftRight },
+];
 
 export function ActionsProvider({ children }: { children: ReactNode }) {
+  const text = useText();
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -30,12 +32,12 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>
           <Pressable style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) }]} onPress={() => undefined}>
-            <Text style={styles.title}>What would you like to do?</Text>
+            <Text style={styles.title}>{text('actions.prompt')}</Text>
             {ACTIONS.map((action) => (
               <Pressable
                 key={action.href}
                 accessibilityRole="button"
-                accessibilityLabel={action.label}
+                accessibilityLabel={text(action.label)}
                 style={styles.row}
                 onPress={() => {
                   setOpen(false);
@@ -45,7 +47,7 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
                 <View style={styles.icon}>
                   <action.Icon color={colors.forest} size={20} strokeWidth={2} />
                 </View>
-                <Text style={styles.label}>{action.label}</Text>
+                <Text style={styles.label}>{text(action.label)}</Text>
               </Pressable>
             ))}
           </Pressable>

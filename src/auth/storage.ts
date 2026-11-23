@@ -1,8 +1,9 @@
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { SESSION_KEY } from '../constants';
 import type { SessionUser } from './types';
 
-const KEY = 'dreamfund.session';
+const KEY = SESSION_KEY;
 
 export async function loadSession(): Promise<SessionUser | null> {
   const raw = Platform.OS === 'web' ? readWeb() : await SecureStore.getItemAsync(KEY);

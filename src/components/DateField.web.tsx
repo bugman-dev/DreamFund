@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 import { formatDay } from '../domain/dates';
+import { useText } from '../locale';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/type';
 import { Field } from './ui';
@@ -17,6 +18,7 @@ export function DateField({
   maximumDate?: string;
   optional?: boolean;
 }) {
+  const text = useText();
   return (
     <Field label={label}>
       <input
@@ -38,10 +40,10 @@ export function DateField({
           color: value ? colors.ink : colors.muted,
         }}
       />
-      {value ? <Text style={styles.hint}>{formatDay(value)}</Text> : optional ? <Text style={styles.hint}>Optional</Text> : null}
+      {value ? <Text style={styles.hint}>{formatDay(value)}</Text> : optional ? <Text style={styles.hint}>{text('common.optional')}</Text> : null}
       {optional && value ? (
         <Pressable accessibilityRole="button" onPress={() => onChange('')}>
-          <Text style={styles.clear}>Clear date</Text>
+          <Text style={styles.clear}>{text('common.clearDate')}</Text>
         </Pressable>
       ) : null}
     </Field>

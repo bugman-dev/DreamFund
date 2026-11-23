@@ -6,6 +6,8 @@ import { useRouter } from 'expo-router';
 import { parseRupees } from '../domain/ledger';
 import type { Category } from '../domain/categories';
 import { formatInr } from '../domain/ledger';
+import { PRESET_IMAGE_PREFIX } from '../constants';
+import { useText } from '../locale';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/type';
 import { CategorySheet } from './CategorySheet';
@@ -37,22 +39,23 @@ export function GoalForm({
   allocatedPaise?: number;
   onSubmit: (draft: GoalDraft) => Promise<void>;
 }) {
+  const text = useText();
   const router = useRouter();
   const [name, setName] = useState(initial.name);
   const [categoryId, setCategoryId] = useState<string | null>(initial.categoryId);
   const [target, setTarget] = useState(initial.target);
   const [targetDate, setTargetDate] = useState(initial.targetDate);
-  const [imageUri, setImageUri] = useState(initial.imageUri && !initial.imageUri.startsWith('preset:') ? initial.imageUri : GENERIC_IMAGE);
+  const [imageUri, setImageUri] = useState(initial.imageUri && !initial.imageUri.startsWith(PRESET_IMAGE_PREFIX) ? initial.imageUri : GENERIC_IMAGE);
   const [sheet, setSheet] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const category = categories.find((item) => item.id === categoryId);
-  const uploaded = !imageUri.startsWith('preset:');
+  const uploaded = !imageUri.startsWith(PRESET_IMAGE_PREFIX);
 
   async function upload() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      setError('Allow photo access to upload a goal image.');
+      setError(text('goal.photoDenied'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [4, 3], quality: 0.8 });
@@ -61,9 +64,9 @@ export function GoalForm({
 
   async function submit() {
     const targetPaise = parseRupees(target);
-    if (!name.trim()) return setError('Enter a goal name.');
-    if (!categoryId) return setError('Choose a category.');
-    if (targetPaise == null || targetPaise <= 0) return setError('Enter a target greater than zero.');
+    if (!name.trim()) return setError(text('goal.nameRequired'));
+    if (!categoryId) return setError(text('common.chooseCategory'));
+    if (targetPaise == null || targetPaise <= 0) return setError(text('goal.targetRequired'));
     const chosenCategory = categoryId;
     setSaving(true);
     setError(null);
@@ -76,7 +79,7 @@ export function GoalForm({
         imageUri,
       });
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'The goal could not be saved.');
+      setError(reason instanceof Error ? reason.message : text('goal.saveFailed'));
       setSaving(false);
     }
   }
@@ -89,28 +92,28 @@ export function GoalForm({
       <View style={styles.imageWrap}>
         <GoalImage uri={imageUri} style={styles.preview} iconSize={36} />
         {uploaded ? null : (
-          <Pressable accessibilityRole="button" accessibilityLabel="Upload image" onPress={upload} style={styles.upload}>
+          <Pressable accessibilityRole="button" accessibilityLabel={text('goal.uploadA11y')} onPress={upload} style={styles.upload}>
             <ImagePlus color={colors.forest} size={18} />
-            <Text style={styles.uploadText}>Upload</Text>
+            <Text style={styles.uploadText}>{text('goal.upload')}</Text>
           </Pressable>
         )}
       </View>
       <View style={styles.form}>
-        <Field label="Goal Name">
-          <TextField value={name} onChangeText={setName} placeholder="Buy a Dishwasher" />
+        <Field label={text('goal.name')}>
+          <TextField value={name} onChangeText={setName} placeholder={text('goal.namePlaceholder')} />
         </Field>
-        <Field label="Category">
+        <Field label={text('goal.category')}>
           <Pressable accessibilityRole="button" onPress={() => setSheet(true)} style={styles.select}>
             {category ? <AppIcon name={category.icon} size={18} color={colors.forest} /> : null}
-            <Text style={[styles.selectText, !category && styles.placeholder]}>{category?.name ?? 'Choose a category'}</Text>
+            <Text style={[styles.selectText, !category && styles.placeholder]}>{category?.name ?? text('common.chooseCategory')}</Text>
             <ChevronDown color={colors.muted} size={18} />
           </Pressable>
         </Field>
-        <Field label="Target Amount">
-          <TextField value={target} onChangeText={setTarget} placeholder="40,000" />
+        <Field label={text('goal.target')}>
+          <TextField value={target} onChangeText={setTarget} placeholder={text('goal.targetPlaceholder')} />
         </Field>
-        {allocatedPaise > 0 ? <Text style={styles.hint}>The target must stay at least {formatInr(allocatedPaise)}.</Text> : null}
-        <DateField label="Target Date (Optional)" value={targetDate} onChange={setTargetDate} optional />
+        {allocatedPaise > 0 ? <Text style={styles.hint}>{text('goal.minimumTarget', { amount: formatInr(allocatedPaise) })}</Text> : null}
+        <DateField label={text('goal.targetDate')} value={targetDate} onChange={setTargetDate} optional />
         {error ? <ErrorText>{error}</ErrorText> : null}
       </View>
       <CategorySheet visible={sheet} selectedId={categoryId} onClose={() => setSheet(false)} onSelect={(id) => { setCategoryId(id); setSheet(false); }} />

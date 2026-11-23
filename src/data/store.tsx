@@ -6,6 +6,8 @@ import { todayIso } from '../domain/dates';
 import type { GoalRecord, TxRecord } from '../domain/ledger';
 import { buildBackup, createCategory, createGoal, deleteCategory, deleteGoal, editTransaction, ensureUser, importBackup, loadAll, savePreferences, addMoney, transferMoney, updateCategory, updateGoal, withdrawMoney } from '../db/repository';
 import { pickJson, shareJson } from '../db/transferFile';
+import { BACKUP_FILE_PREFIX, DEFAULT_REMINDER_HOUR, DEFAULT_REMINDER_MINUTE, NOTICE_MS } from '../constants';
+import { t } from '../locale/messages';
 import { syncReminder } from '../notifications/reminders';
 
 type DataValue = {
@@ -34,7 +36,7 @@ type DataValue = {
   importBackup: () => Promise<boolean>;
 };
 
-const emptyPreferences: Preferences = { reminderEnabled: false, reminderHour: 20, reminderMinute: 0 };
+const emptyPreferences: Preferences = { reminderEnabled: false, reminderHour: DEFAULT_REMINDER_HOUR, reminderMinute: DEFAULT_REMINDER_MINUTE };
 const DataContext = createContext<DataValue | null>(null);
 
 export function DataProvider({ children }: { children: ReactNode }) {
@@ -52,7 +54,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   function flash(message: string) {
     if (noticeTimer.current) clearTimeout(noticeTimer.current);
     setNotice(message);
-    noticeTimer.current = setTimeout(() => setNotice(null), 2600);
+    noticeTimer.current = setTimeout(() => setNotice(null), NOTICE_MS);
   }
 
   async function reload(userId: string) {
@@ -81,7 +83,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     ensureUser(user)
       .then(() => reload(user.sub))
       .catch((reason: unknown) => {
-        if (active) setError(reason instanceof Error ? reason.message : 'Dream Fund could not open your records.');
+        if (active) setError(reason instanceof Error ? reason.message : t('records.openFailed'));
       })
       .finally(() => {
         if (active) setReady(true);
@@ -94,7 +96,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const value = useMemo<DataValue>(() => {
     const userId = user?.sub;
     async function run(task: (id: string) => Promise<void>, message?: string) {
-      if (!userId) throw new Error('Sign in to continue.');
+      if (!userId) throw new Error(t('auth.signIn'));
       await task(userId);
       await reload(userId);
       if (message) flash(message);
@@ -113,50 +115,50 @@ export function DataProvider({ children }: { children: ReactNode }) {
       },
       clearNotice: () => setNotice(null),
       createCategory: async (name, icon) => {
-        if (!userId) throw new Error('Sign in to continue.');
+        if (!userId) throw new Error(t('auth.signIn'));
         const category = await createCategory(userId, name, icon);
         await reload(userId);
         return category;
       },
-      updateCategory: (id, name, icon) => run((userId) => updateCategory(userId, id, name, icon), 'Category updated.'),
-      deleteCategory: (id) => run((userId) => deleteCategory(userId, id), 'Category deleted.'),
+      updateCategory: (id, name, icon) => run((userId) => updateCategory(userId, id, name, icon), t('categories.updated')),
+      deleteCategory: (id) => run((userId) => deleteCategory(userId, id), t('categories.deleted')),
       createGoal: async (input) => {
-        if (!userId) throw new Error('Sign in to continue.');
+        if (!userId) throw new Error(t('auth.signIn'));
         const id = await createGoal(userId, input);
         await reload(userId);
-        flash(`${input.name.trim()} is ready.`);
+        flash(t('goal.ready', { name: input.name.trim() }));
         return id;
       },
-      updateGoal: (id, patch) => run((userId) => updateGoal(userId, id, patch), 'Goal updated.'),
-      deleteGoal: (id) => run((userId) => deleteGoal(userId, id), 'Goal deleted.'),
-      addMoney: (input) => run((userId) => addMoney(userId, input), 'Money added.'),
-      withdrawMoney: (input) => run((userId) => withdrawMoney(userId, input), 'Withdrawal recorded.'),
-      transferMoney: (input) => run((userId) => transferMoney(userId, input), 'Transfer recorded.'),
-      editTransaction: (input) => run((userId) => editTransaction(userId, input), 'Transaction updated.'),
+      updateGoal: (id, patch) => run((userId) => updateGoal(userId, id, patch), t('goal.updated')),
+      deleteGoal: (id) => run((userId) => deleteGoal(userId, id), t('goal.deleted')),
+      addMoney: (input) => run((userId) => addMoney(userId, input), t('money.added')),
+      withdrawMoney: (input) => run((userId) => withdrawMoney(userId, input), t('money.withdrawn')),
+      transferMoney: (input) => run((userId) => transferMoney(userId, input), t('money.transferred')),
+      editTransaction: (input) => run((userId) => editTransaction(userId, input), t('tx.updated')),
       setReminder: async (enabled, hour, minute) => {
         const next = { reminderEnabled: enabled, reminderHour: hour, reminderMinute: minute };
         await syncReminder(next);
-        await run((userId) => savePreferences(userId, next), enabled ? 'Daily reminder saved.' : 'Daily reminder turned off.');
+        await run((userId) => savePreferences(userId, next), enabled ? t('profile.reminderSaved') : t('profile.reminderCleared'));
       },
       exportBackup: async () => {
-        if (!userId) throw new Error('Sign in to continue.');
+        if (!userId) throw new Error(t('auth.signIn'));
         const backup = await buildBackup(userId);
-        await shareJson(`dreamfund-backup-${todayIso()}.json`, JSON.stringify(backup, null, 2));
-        flash('Backup ready.');
+        await shareJson(`${BACKUP_FILE_PREFIX}${todayIso()}.json`, JSON.stringify(backup, null, 2));
+        flash(t('profile.backupReady'));
       },
       importBackup: async () => {
-        if (!userId) throw new Error('Sign in to continue.');
+        if (!userId) throw new Error(t('auth.signIn'));
         const text = await pickJson();
         if (text == null) return false;
         let parsed: unknown;
         try {
           parsed = JSON.parse(text);
         } catch {
-          throw new Error('That file is not valid JSON.');
+          throw new Error(t('profile.invalidJson'));
         }
         await importBackup(userId, parsed);
         await reload(userId);
-        flash('Backup restored.');
+        flash(t('profile.backupRestored'));
         return true;
       },
     };
@@ -167,6 +169,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
 export function useData(): DataValue {
   const value = useContext(DataContext);
-  if (!value) throw new Error('Records are unavailable.');
+  if (!value) throw new Error(t('records.unavailable'));
   return value;
 }

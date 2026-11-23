@@ -7,17 +7,19 @@ import { compareTransactions, formatInr } from '../../src/domain/ledger';
 import { transactionDetail, transactionTitle } from '../../src/data/present';
 import { EmptyState, FilterChip, Screen, Title } from '../../src/components/ui';
 import { useBooks } from '../../src/data/useBooks';
+import { useText, type MessageId } from '../../src/locale';
 import { colors } from '../../src/theme/colors';
 import { fonts } from '../../src/theme/type';
 
-const FILTERS = [
-  { id: 'all', label: 'All' },
-  { id: 'addition', label: 'Additions' },
-  { id: 'withdrawal', label: 'Withdrawals' },
-  { id: 'transfer', label: 'Transfers' },
-] as const;
+const FILTERS: { id: 'all' | 'addition' | 'withdrawal' | 'transfer'; label: MessageId }[] = [
+  { id: 'all', label: 'common.all' },
+  { id: 'addition', label: 'tx.additions' },
+  { id: 'withdrawal', label: 'tx.withdrawals' },
+  { id: 'transfer', label: 'tx.transfers' },
+];
 
 export default function TransactionsScreen() {
+  const text = useText();
   const router = useRouter();
   const params = useLocalSearchParams<{ goalId?: string; type?: string }>();
   const goalId = typeof params.goalId === 'string' ? params.goalId : '';
@@ -38,19 +40,19 @@ export default function TransactionsScreen() {
 
   return (
     <Screen>
-      <Title>Transactions</Title>
+      <Title>{text('tx.title')}</Title>
       <View style={styles.filters}>
         {FILTERS.map((filter) => (
-          <FilterChip key={filter.id} label={filter.label} selected={type === filter.id} onPress={() => router.setParams({ type: filter.id === 'all' ? '' : filter.id })} />
+          <FilterChip key={filter.id} label={text(filter.label)} selected={type === filter.id} onPress={() => router.setParams({ type: filter.id === 'all' ? '' : filter.id })} />
         ))}
       </View>
       {goal ? (
         <Pressable accessibilityRole="button" onPress={() => router.setParams({ goalId: '' })} style={styles.goalFilter}>
-          <Text style={styles.goalFilterText}>{goal.name} · Clear</Text>
+          <Text style={styles.goalFilterText}>{text('tx.clearGoal', { name: goal.name })}</Text>
         </Pressable>
       ) : null}
       {rows.length === 0 ? (
-        <EmptyState title="No transactions yet" body="Additions, withdrawals, and transfers will appear here in the order they happened." action="Add money" onAction={() => router.push('/money/add')} />
+        <EmptyState title={text('tx.emptyTitle')} body={text('tx.emptyBody')} action={text('tx.addMoney')} onAction={() => router.push('/money/add')} />
       ) : (
         [...groups.entries()].map(([month, items]) => (
           <View key={month} style={styles.group}>

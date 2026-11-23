@@ -10,6 +10,8 @@ import { SessionProvider } from '../src/auth/session';
 import { ActionsProvider } from '../src/components/ActionSheet';
 import { LoadingScreen, NoticeBanner } from '../src/components/ui';
 import { DataProvider, useData } from '../src/data/store';
+import { WEB_MAX_WIDTH } from '../src/constants';
+import { LocaleProvider } from '../src/locale';
 import { colors } from '../src/theme/colors';
 
 export default function RootLayout() {
@@ -25,15 +27,17 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.grey }}>
       <SafeAreaProvider>
         <View style={frame}>
-          <SessionProvider>
-            <DataProvider>
-              <ActionsProvider>
-                <StatusBar style="dark" />
-                <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.ivory } }} />
-                <NoticeHost />
-              </ActionsProvider>
-            </DataProvider>
-          </SessionProvider>
+          <LocaleProvider>
+            <SessionProvider>
+              <DataProvider>
+                <ActionsProvider>
+                  <StatusBar style="dark" />
+                  <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.ivory } }} />
+                  <NoticeHost />
+                </ActionsProvider>
+              </DataProvider>
+            </SessionProvider>
+          </LocaleProvider>
         </View>
       </SafeAreaProvider>
     </GestureHandlerRootView>
@@ -41,7 +45,7 @@ export default function RootLayout() {
 }
 
 const frame = Platform.OS === 'web'
-  ? { flex: 1, width: '100%', maxWidth: 430, alignSelf: 'center' as const, backgroundColor: colors.ivory }
+  ? { flex: 1, width: '100%', maxWidth: WEB_MAX_WIDTH, alignSelf: 'center' as const, backgroundColor: colors.ivory }
   : { flex: 1, backgroundColor: colors.ivory };
 
 function NoticeHost() {

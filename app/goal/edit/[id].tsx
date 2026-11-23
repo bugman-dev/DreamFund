@@ -3,8 +3,10 @@ import { paiseToInput } from '../../../src/domain/ledger';
 import { GoalForm } from '../../../src/components/GoalForm';
 import { EmptyState, Screen, ScreenHeader } from '../../../src/components/ui';
 import { useBooks } from '../../../src/data/useBooks';
+import { useText } from '../../../src/locale';
 
 export default function EditGoalScreen() {
+  const text = useText();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const goalId = typeof id === 'string' ? id : '';
@@ -14,15 +16,15 @@ export default function EditGoalScreen() {
   if (!goal || !presented) {
     return (
       <Screen>
-        <ScreenHeader title="Edit Goal" onBack={() => router.back()} />
-        <EmptyState title="This goal is not active" body="Deleted goals stay in your history, and their details can no longer be edited." />
+        <ScreenHeader title={text('goal.editTitle')} onBack={() => router.back()} />
+        <EmptyState title={text('goal.inactiveTitle')} body={text('goal.inactiveBody')} />
       </Screen>
     );
   }
   return (
     <GoalForm
-      title="Edit Goal"
-      submitLabel="Save Goal"
+      title={text('goal.editTitle')}
+      submitLabel={text('goal.editSubmit')}
       categories={books.categories}
       allocatedPaise={presented.allocatedPaise}
       initial={{

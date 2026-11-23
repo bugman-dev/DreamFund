@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronDown } from 'lucide-react-native';
+import { MONEY_SHORTCUTS, PAISE_PER_RUPEE } from '../constants';
 import { todayIso } from '../domain/dates';
 import { formatInr, NOTE_LIMIT, parseRupees } from '../domain/ledger';
 import type { PresentedGoal } from '../data/present';
+import { useText } from '../locale';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/type';
 import { useData } from '../data/store';
@@ -12,8 +14,6 @@ import { ConfirmModal } from './ConfirmModal';
 import { DateField } from './DateField';
 import { GoalImage } from './GoalImage';
 import { Button, EmptyState, ErrorText, Field, LoadingScreen, Screen, ScreenHeader } from './ui';
-
-const SHORTCUTS = [1000, 2000, 5000, 10000];
 
 export function MoneyForm({
   mode,
@@ -26,6 +26,7 @@ export function MoneyForm({
   initialGoalId?: string;
   onSubmit: (input: { goalId: string; counterGoalId?: string; amountPaise: number; date: string; note: string }) => Promise<void>;
 }) {
+  const text = useText();
   const router = useRouter();
   const data = useData();
   const active = useMemo(() => goals.filter((goal) => !goal.deleted), [goals]);
@@ -55,16 +56,16 @@ export function MoneyForm({
   const [picking, setPicking] = useState<'from' | 'to' | null>(null);
   const goal = active.find((item) => item.id === goalId);
   const counter = active.find((item) => item.id === counterGoalId);
-  const title = mode === 'add' ? 'Add Money to Goal' : mode === 'withdraw' ? 'Withdraw from Goal' : 'Transfer Between Goals';
-  const action = mode === 'add' ? 'Add Money' : mode === 'withdraw' ? 'Withdraw Money' : 'Transfer Money';
+  const title = mode === 'add' ? text('money.addTitle') : mode === 'withdraw' ? text('money.withdrawTitle') : text('money.transferTitle');
+  const action = mode === 'add' ? text('money.addAction') : mode === 'withdraw' ? text('money.withdrawAction') : text('money.transferAction');
 
   const message = useMemo(() => {
     const paise = parseRupees(amount);
     if (!paise || !goal) return '';
-    if (mode === 'add') return `Add ${formatInr(paise)} to ${goal.name}?`;
-    if (mode === 'withdraw') return `Withdraw ${formatInr(paise)} from ${goal.name}?`;
-    return `Transfer ${formatInr(paise)} from ${goal.name} to ${counter?.name ?? 'another goal'}?`;
-  }, [amount, counter?.name, goal, mode]);
+    if (mode === 'add') return text('money.confirmAdd', { amount: formatInr(paise), name: goal.name });
+    if (mode === 'withdraw') return text('money.confirmWithdraw', { amount: formatInr(paise), name: goal.name });
+    return text('money.confirmTransfer', { amount: formatInr(paise), name: goal.name, counter: counter?.name ?? text('money.anotherGoal') });
+  }, [amount, counter?.name, goal, mode, text]);
 
   if (!data.ready) {
     return (
@@ -78,7 +79,7 @@ export function MoneyForm({
     return (
       <Screen>
         <ScreenHeader title={title} onBack={() => router.back()} />
-        <EmptyState title="Create a goal first" body="Every amount you record belongs to a goal." action="Create a goal" onAction={() => router.push('/goal/create')} />
+        <EmptyState title={text('money.needGoalTitle')} body={text('money.needGoalBody')} action={text('home.createGoal')} onAction={() => router.push('/goal/create')} />
       </Screen>
     );
   }
@@ -86,22 +87,22 @@ export function MoneyForm({
     return (
       <Screen>
         <ScreenHeader title={title} onBack={() => router.back()} />
-        <EmptyState title="You need two goals" body="A transfer moves money from one goal to another without changing your total savings." action="Create a goal" onAction={() => router.push('/goal/create')} />
+        <EmptyState title={text('money.needTwoTitle')} body={text('money.needTwoBody')} action={text('home.createGoal')} onAction={() => router.push('/goal/create')} />
       </Screen>
     );
   }
 
   function addShortcut(rupees: number) {
     const current = parseRupees(amount) ?? 0;
-    setAmount(String((current + rupees * 100) / 100));
+    setAmount(String((current + rupees * PAISE_PER_RUPEE) / PAISE_PER_RUPEE));
   }
 
   function askConfirm() {
     const paise = parseRupees(amount);
-    if (!goal) return setError('Choose a goal.');
-    if (paise == null || paise <= 0) return setError('Enter an amount greater than zero.');
-    if (mode === 'transfer' && (!counter || counter.id === goal.id)) return setError('Choose two different goals.');
-    if (note.trim().length > NOTE_LIMIT) return setError(`Notes can be up to ${NOTE_LIMIT} characters.`);
+    if (!goal) return setError(text('common.chooseGoal'));
+    if (paise == null || paise <= 0) return setError(text('money.amountRequired'));
+    if (mode === 'transfer' && (!counter || counter.id === goal.id)) return setError(text('money.twoGoals'));
+    if (note.trim().length > NOTE_LIMIT) return setError(text('money.noteLimit', { limit: NOTE_LIMIT }));
     setError(null);
     setConfirming(true);
   }
@@ -116,7 +117,7 @@ export function MoneyForm({
       router.back();
     } catch (reason) {
       setConfirming(false);
-      setError(reason instanceof Error ? reason.message : 'The amount could not be recorded.');
+      setError(reason instanceof Error ? reason.message : text('money.recordFailed'));
       setSaving(false);
     }
   }
@@ -125,15 +126,15 @@ export function MoneyForm({
     <Screen footer={<Button label={action} tone={mode === 'withdraw' ? 'danger' : 'primary'} onPress={askConfirm} disabled={saving} />}>
       <ScreenHeader title={title} onBack={() => router.back()} />
       <View style={styles.body}>
-        {mode === 'transfer' ? <Text style={styles.kicker}>From</Text> : null}
-        <GoalRow goal={goal} onPress={() => setPicking('from')} detail={mode === 'withdraw' ? `${formatInr(goal?.allocatedPaise ?? 0)} available` : `${formatInr(goal?.allocatedPaise ?? 0)} of ${formatInr(goal?.targetPaise ?? 0)}`} />
+        {mode === 'transfer' ? <Text style={styles.kicker}>{text('money.from')}</Text> : null}
+        <GoalRow goal={goal} onPress={() => setPicking('from')} detail={mode === 'withdraw' ? text('money.available', { amount: formatInr(goal?.allocatedPaise ?? 0) }) : text('money.savedOf', { saved: formatInr(goal?.allocatedPaise ?? 0), target: formatInr(goal?.targetPaise ?? 0) })} />
         {mode === 'transfer' ? (
           <>
-            <Text style={styles.kicker}>To</Text>
-            <GoalRow goal={counter} onPress={() => setPicking('to')} detail={counter ? `${formatInr(counter.remainingPaise)} room left` : 'Choose a goal'} />
+            <Text style={styles.kicker}>{text('money.to')}</Text>
+            <GoalRow goal={counter} onPress={() => setPicking('to')} detail={counter ? text('money.roomLeft', { amount: formatInr(counter.remainingPaise) }) : text('common.chooseGoal')} />
           </>
         ) : null}
-        <Field label="Amount">
+        <Field label={text('money.amount')}>
           <TextInput
             value={amount}
             onChangeText={(value) => setAmount(value.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1'))}
@@ -144,18 +145,18 @@ export function MoneyForm({
           />
         </Field>
         <View style={styles.shortcuts}>
-          {SHORTCUTS.map((rupees) => (
+          {MONEY_SHORTCUTS.map((rupees) => (
             <Pressable key={rupees} accessibilityRole="button" onPress={() => addShortcut(rupees)} style={styles.shortcut}>
-              <Text style={styles.shortcutText}>+{formatInr(rupees * 100)}</Text>
+              <Text style={styles.shortcutText}>+{formatInr(rupees * PAISE_PER_RUPEE)}</Text>
             </Pressable>
           ))}
         </View>
-        <DateField label="Date" value={date} onChange={setDate} maximumDate={todayIso()} />
-        <Field label="Note (Optional)">
+        <DateField label={text('money.date')} value={date} onChange={setDate} maximumDate={todayIso()} />
+        <Field label={text('money.note')}>
           <TextInput
             value={note}
             onChangeText={(value) => setNote(value.slice(0, NOTE_LIMIT))}
-            placeholder={mode === 'withdraw' ? 'Used for booking advance refund' : 'Saved from this month’s surplus'}
+            placeholder={mode === 'withdraw' ? text('money.noteWithdrawPlaceholder') : text('money.noteAddPlaceholder')}
             placeholderTextColor={colors.muted}
             multiline
             style={styles.note}
@@ -182,10 +183,10 @@ export function MoneyForm({
               style={styles.pickerRow}
             >
               <Text style={styles.pickerName}>{item.name}</Text>
-              <Text style={styles.pickerMeta}>{formatInr(item.allocatedPaise)} saved</Text>
+              <Text style={styles.pickerMeta}>{text('money.savedMeta', { amount: formatInr(item.allocatedPaise) })}</Text>
             </Pressable>
           ))}
-          <Button label="Close" tone="ghost" onPress={() => setPicking(null)} />
+          <Button label={text('common.close')} tone="ghost" onPress={() => setPicking(null)} />
         </View>
       ) : null}
       <ConfirmModal
@@ -203,11 +204,12 @@ export function MoneyForm({
 }
 
 function GoalRow({ goal, detail, onPress }: { goal?: PresentedGoal; detail: string; onPress: () => void }) {
+  const text = useText();
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={styles.goal}>
       <GoalImage uri={goal?.imageUri ?? null} style={styles.thumb} iconSize={18} />
       <View style={styles.goalText}>
-        <Text style={styles.goalName}>{goal?.name ?? 'Choose a goal'}</Text>
+        <Text style={styles.goalName}>{goal?.name ?? text('common.chooseGoal')}</Text>
         <Text style={styles.goalDetail}>{detail}</Text>
       </View>
       <ChevronDown color={colors.muted} size={18} />

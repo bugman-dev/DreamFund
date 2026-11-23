@@ -1,4 +1,5 @@
 import * as SQLite from 'expo-sqlite';
+import { DATABASE_NAME } from '../constants';
 
 const SCHEMA = `
 PRAGMA journal_mode = WAL;
@@ -64,7 +65,7 @@ let queue: Promise<unknown> = Promise.resolve();
 
 export function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (!databasePromise) {
-    databasePromise = SQLite.openDatabaseAsync('dreamfund.db')
+    databasePromise = SQLite.openDatabaseAsync(DATABASE_NAME)
       .then(async (db) => {
         await db.execAsync(SCHEMA);
         return db;

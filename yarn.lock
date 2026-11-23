@@ -989,6 +989,32 @@
     chalk "^4.1.0"
     js-yaml "^4.1.0"
 
+"@formatjs/fast-memoize@3.1.8":
+  version "3.1.8"
+  resolved "https://registry.yarnpkg.com/@formatjs/fast-memoize/-/fast-memoize-3.1.8.tgz#1442251fe4107ba127904c22a815fae33a961c98"
+  integrity sha512-Y9YFFfeBDkAWmLWD3LVNHbHlyELsP2lYRNoY6+QhtPh1/ujCiX5QYBzAqe0cWdkCxKVezHLt0qjWz1veEUV7UA==
+
+"@formatjs/icu-messageformat-parser@3.5.23":
+  version "3.5.23"
+  resolved "https://registry.yarnpkg.com/@formatjs/icu-messageformat-parser/-/icu-messageformat-parser-3.5.23.tgz#4812fd6d3adf844036108697f0486bf0464b2d5f"
+  integrity sha512-iB1fYfhtSGd8uH9A8b1m01Ujcv6QtQnJasefP3jPApmz72L/zNipzf3BdoinTMd1xuviVChjUJWL60iTwjUQ+w==
+  dependencies:
+    "@formatjs/icu-skeleton-parser" "2.1.13"
+
+"@formatjs/icu-skeleton-parser@2.1.13":
+  version "2.1.13"
+  resolved "https://registry.yarnpkg.com/@formatjs/icu-skeleton-parser/-/icu-skeleton-parser-2.1.13.tgz#b51ec5c826b93c34d4e45390a4d32d05c222cf07"
+  integrity sha512-IdAJ9NrHn7AF0zqncD9UpxQozTYyJtbwwrZnJMEKVxTcOOXtVkUb2XYTpNOGTAv58NCsk0rjRB9G+i2SvBmGAQ==
+
+"@formatjs/intl@6.2.1":
+  version "6.2.1"
+  resolved "https://registry.yarnpkg.com/@formatjs/intl/-/intl-6.2.1.tgz#5a280734eb2047dc5bfa8a1835a9aadd705585e3"
+  integrity sha512-ONOk8qLnUD0NOlWj6uSNEjeq/Ta9rJ6Z4LytoZMh2ILqXeCtlWGExgc5pYiLZ37kCBKkm3Pr365nz9Lmnhq7AQ==
+  dependencies:
+    "@formatjs/fast-memoize" "3.1.8"
+    "@formatjs/icu-messageformat-parser" "3.5.23"
+    intl-messageformat "12.2.1"
+
 "@isaacs/ttlcache@^1.4.1":
   version "1.4.1"
   resolved "https://registry.yarnpkg.com/@isaacs/ttlcache/-/ttlcache-1.4.1.tgz#21fb23db34e9b6220c6ba023a0118a2dd3461ea2"
@@ -2488,6 +2514,14 @@ inline-style-prefixer@^7.0.1:
   dependencies:
     css-in-js-utils "^3.1.0"
 
+intl-messageformat@12.2.1:
+  version "12.2.1"
+  resolved "https://registry.yarnpkg.com/intl-messageformat/-/intl-messageformat-12.2.1.tgz#c1ec4668282dc3559eb23aa24f5ba9a4dc995030"
+  integrity sha512-GvlBHj5Blu0ro39QT/QEbX3I23GAYvDh9/B+l33NnXjmYe/UoqFgZjNZoqPa6QdWwAliP/i27y5JeKjFkqlbRA==
+  dependencies:
+    "@formatjs/fast-memoize" "3.1.8"
+    "@formatjs/icu-messageformat-parser" "3.5.23"
+
 invariant@^2.2.4:
   version "2.2.4"
   resolved "https://registry.yarnpkg.com/invariant/-/invariant-2.2.4.tgz#610f3c92c9359ce1db616e538008d23ff35158e6"
@@ -3479,6 +3513,15 @@ react-freeze@^1.0.0:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/react-freeze/-/react-freeze-1.0.4.tgz#cbbea2762b0368b05cbe407ddc9d518c57c6f3ad"
   integrity sha512-r4F0Sec0BLxWicc7HEyo2x3/2icUTrRmDjaaRyzzn+7aDyFZliszMDOgLVwSnQnYENOlL1o569Ze2HZefk8clA==
+
+react-intl@^12.2.1:
+  version "12.2.1"
+  resolved "https://registry.yarnpkg.com/react-intl/-/react-intl-12.2.1.tgz#aaf2cfe00aceedaea7853083d948f24232c5aac3"
+  integrity sha512-RAvv36BaFDw/4HAUDmTBStvdfrKxmg0UOMv3ojeB4qPBs7tXbv8qeSThKrpe3MeSaRijJtUeZK9SP/WBcFoKDg==
+  dependencies:
+    "@formatjs/icu-messageformat-parser" "3.5.23"
+    "@formatjs/intl" "6.2.1"
+    intl-messageformat "12.2.1"
 
 react-is@^18.0.0:
   version "18.3.1"

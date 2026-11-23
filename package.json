@@ -28,6 +28,7 @@
     "lucide-react-native": "^1.78.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "react-intl": "^12.2.1",
     "react-native": "0.88.1",
     "react-native-gesture-handler": "~3.3.0",
     "react-native-reanimated": "4.7.1",
@@ -46,7 +47,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "node --experimental-strip-types --test src/domain/ledger.test.ts"
+    "test": "node --experimental-strip-types --import ./scripts/register-resolve.mjs --test src/domain/ledger.test.ts"
   },
   "private": true
 }

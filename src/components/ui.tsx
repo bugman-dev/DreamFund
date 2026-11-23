@@ -2,6 +2,8 @@ import { ChevronLeft } from 'lucide-react-native';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import type { ReactNode } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PERCENT_MAX } from '../constants';
+import { useText } from '../locale';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/type';
 import { AppIcon } from './icons';
@@ -53,9 +55,10 @@ export function ScreenHeader({
   onBack: () => void;
   right?: ReactNode;
 }) {
+  const text = useText();
   return (
     <View style={styles.header}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={onBack} hitSlop={8} style={styles.headerButton}>
+      <Pressable accessibilityRole="button" accessibilityLabel={text('common.back')} onPress={onBack} hitSlop={8} style={styles.headerButton}>
         <ChevronLeft color={colors.ink} size={24} strokeWidth={2} />
       </Pressable>
       <Text style={styles.headerTitle}>{title}</Text>
@@ -152,7 +155,7 @@ export function Card({ children, style }: { children: ReactNode; style?: StylePr
 export function ProgressBar({ progress }: { progress: number }) {
   return (
     <View style={styles.track}>
-      <View style={[styles.fillBar, { width: `${Math.max(0, Math.min(100, progress))}%` }]} />
+      <View style={[styles.fillBar, { width: `${Math.max(0, Math.min(PERCENT_MAX, progress))}%` }]} />
     </View>
   );
 }

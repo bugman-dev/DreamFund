@@ -1,12 +1,14 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { formatInr } from '../domain/ledger';
 import type { PresentedGoal } from '../data/present';
+import { useText } from '../locale';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/type';
 import { GoalImage } from './GoalImage';
 import { CategoryChip, ProgressBar } from './ui';
 
 export function GoalCard({ goal, onPress }: { goal: PresentedGoal; onPress: () => void }) {
+  const text = useText();
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={goal.name} onPress={onPress} style={styles.card}>
       <GoalImage uri={goal.imageUri} style={styles.image} iconSize={26} />
@@ -17,11 +19,11 @@ export function GoalCard({ goal, onPress }: { goal: PresentedGoal; onPress: () =
         </View>
         <View style={styles.amounts}>
           <Text style={styles.saved}>{formatInr(goal.allocatedPaise)}</Text>
-          <Text style={styles.target}>of {formatInr(goal.targetPaise)}</Text>
+          <Text style={styles.target}>{text('home.ofAmount', { amount: formatInr(goal.targetPaise) })}</Text>
           <Text style={styles.percent}>{goal.progress}%</Text>
         </View>
         <ProgressBar progress={goal.progress} />
-        {goal.completed ? <Text style={styles.done}>Completed</Text> : null}
+        {goal.completed ? <Text style={styles.done}>{text('common.completed')}</Text> : null}
       </View>
     </Pressable>
   );

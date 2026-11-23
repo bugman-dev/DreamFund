@@ -1,4 +1,5 @@
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useText } from '../locale';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/type';
 import { Button } from './ui';
@@ -22,6 +23,7 @@ export function ConfirmModal({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const text = useText();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <Pressable style={styles.backdrop} onPress={busy ? undefined : onCancel}>
@@ -30,7 +32,7 @@ export function ConfirmModal({
           <Text style={styles.message}>{message}</Text>
           <View style={styles.actions}>
             <View style={styles.action}>
-              <Button label="Cancel" tone="ghost" onPress={onCancel} disabled={busy} />
+              <Button label={text('common.cancel')} tone="ghost" onPress={onCancel} disabled={busy} />
             </View>
             <View style={styles.action}>
               <Button label={confirmLabel} tone={tone} onPress={onConfirm} disabled={busy} />

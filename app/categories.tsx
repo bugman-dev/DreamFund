@@ -7,10 +7,12 @@ import type { Category } from '../src/domain/categories';
 import { AppIcon } from '../src/components/icons';
 import { Button, ErrorText, Screen, ScreenHeader } from '../src/components/ui';
 import { useData } from '../src/data/store';
+import { useText } from '../src/locale';
 import { colors } from '../src/theme/colors';
 import { fonts } from '../src/theme/type';
 
 export default function CategoriesScreen() {
+  const text = useText();
   const router = useRouter();
   const data = useData();
   const [editing, setEditing] = useState<Category | null>(null);
@@ -42,7 +44,7 @@ export default function CategoriesScreen() {
       setCreating(false);
       setEditing(null);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'The category could not be saved.');
+      setError(reason instanceof Error ? reason.message : text('categories.saveFailed'));
     }
   }
 
@@ -53,13 +55,13 @@ export default function CategoriesScreen() {
       await data.deleteCategory(editing.id);
       setEditing(null);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'The category could not be deleted.');
+      setError(reason instanceof Error ? reason.message : text('categories.deleteFailed'));
     }
   }
 
   return (
     <Screen>
-      <ScreenHeader title="Categories" onBack={() => router.back()} />
+      <ScreenHeader title={text('categories.title')} onBack={() => router.back()} />
       <View style={styles.list}>
         {data.categories.map((category) => (
           <Pressable key={category.id} accessibilityRole="button" onPress={() => { if (!category.isPreset) open(category); }} style={styles.row}>
@@ -67,18 +69,18 @@ export default function CategoriesScreen() {
               <AppIcon name={category.icon} size={18} color={colors.forest} />
             </View>
             <Text style={styles.name}>{category.name}</Text>
-            {category.isPreset ? <Lock color={colors.muted} size={16} /> : <Text style={styles.edit}>Edit</Text>}
+            {category.isPreset ? <Lock color={colors.muted} size={16} /> : <Text style={styles.edit}>{text('categories.edit')}</Text>}
           </Pressable>
         ))}
       </View>
       <View style={styles.add}>
-        <Button label="Add category" onPress={() => open()} />
+        <Button label={text('categories.add')} onPress={() => open()} />
       </View>
       <Modal visible={creating || editing != null} transparent animationType="fade" onRequestClose={() => { setCreating(false); setEditing(null); }}>
         <View style={styles.backdrop}>
           <View style={styles.sheet}>
-            <Text style={styles.sheetTitle}>{creating ? 'New category' : 'Edit category'}</Text>
-            <TextInput value={name} onChangeText={setName} placeholder="Category name" placeholderTextColor={colors.muted} style={styles.input} />
+            <Text style={styles.sheetTitle}>{creating ? text('categories.new') : text('categories.editTitle')}</Text>
+            <TextInput value={name} onChangeText={setName} placeholder={text('categories.namePlaceholder')} placeholderTextColor={colors.muted} style={styles.input} />
             <View style={styles.icons}>
               {ICON_NAMES.map((item) => (
                 <Pressable key={item} accessibilityRole="button" onPress={() => setIcon(item)} style={[styles.choice, icon === item && styles.choiceSelected]}>
@@ -87,9 +89,9 @@ export default function CategoriesScreen() {
               ))}
             </View>
             {error ? <ErrorText>{error}</ErrorText> : null}
-            <Button label="Save" onPress={() => void save()} />
-            {editing ? <Button label="Delete" tone="danger" onPress={() => void remove()} /> : null}
-            <Button label="Close" tone="ghost" onPress={() => { setCreating(false); setEditing(null); }} />
+            <Button label={text('common.save')} onPress={() => void save()} />
+            {editing ? <Button label={text('common.delete')} tone="danger" onPress={() => void remove()} /> : null}
+            <Button label={text('common.close')} tone="ghost" onPress={() => { setCreating(false); setEditing(null); }} />
           </View>
         </View>
       </Modal>

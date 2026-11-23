@@ -1,8 +1,10 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import type { Preferences } from '../domain/backup';
+import { REMINDER_KIND } from '../constants';
+import { t } from '../locale/messages';
 
-const KIND = 'dreamfund-reminder';
+const KIND = REMINDER_KIND;
 
 if (Platform.OS !== 'web') {
   Notifications.setNotificationHandler({
@@ -25,12 +27,12 @@ export async function syncReminder(preferences: Preferences): Promise<void> {
   );
   if (!preferences.reminderEnabled) return;
   const permission = await Notifications.requestPermissionsAsync();
-  if (!permission.granted) throw new Error('Notifications are turned off for Dream Fund.');
+  if (!permission.granted) throw new Error(t('reminder.denied'));
   await Notifications.scheduleNotificationAsync({
     identifier: KIND,
     content: {
-      title: 'Dream Fund',
-      body: 'Set aside something for your goals today.',
+      title: t('reminder.title'),
+      body: t('reminder.body'),
       data: { kind: KIND },
     },
     trigger: {
