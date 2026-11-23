@@ -70,7 +70,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  top: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 16 },
+  top: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 32, paddingBottom: 16 },
   greetingBlock: { flex: 1 },
   greeting: { fontFamily: fonts.regular, fontSize: 16, color: colors.muted },
   name: { fontFamily: fonts.bold, fontSize: 28, color: colors.ink },

@@ -12,9 +12,9 @@ export const GENERIC_IMAGE = `${PRESET_IMAGE_PREFIX}generic`;
 
 export const PREVIEW_GOOGLE_CLIENT_ID = 'preview.apps.googleusercontent.com';
 export const PREVIEW_USER = {
-  sub: 'preview-thejus',
-  name: 'Thejus',
-  email: 'thejus@dreamfund.app',
+  sub: 'preview-guest',
+  name: 'Guest',
+  email: 'guest@dreamfund.app',
   photoUrl: null,
 };
 
