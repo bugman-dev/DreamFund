@@ -47,7 +47,6 @@ const TX_TYPES: TxType[] = [...TRANSACTION_TYPES];
 
 export function restoreBackup(
   raw: unknown,
-  presets: Category[],
   clock: Clock,
 ): { ok: true; data: RestoredBackup } | { ok: false; error: string } {
   if (!isRecord(raw) || raw.version !== BACKUP_VERSION) return fail(t('backup.notFile'));
@@ -57,7 +56,7 @@ export function restoreBackup(
 
   const categoryIds = new Map<string, string>();
   const customs: Category[] = [];
-  const usedNames = new Set(presets.map((category) => category.name.toLowerCase()));
+  const usedNames = new Set<string>();
 
   for (const item of raw.categories) {
     if (!isRecord(item) || typeof item.id !== 'string' || typeof item.name !== 'string') {
@@ -65,13 +64,7 @@ export function restoreBackup(
     }
     const name = item.name.trim();
     if (!name || name.length > CATEGORY_NAME_LIMIT) return fail(t('backup.categoryName'));
-    const preset = presets.find((category) => category.name.toLowerCase() === name.toLowerCase());
-    if (item.isPreset === true) {
-      if (!preset) return fail(t('backup.unknownPreset', { name }));
-      categoryIds.set(item.id, preset.id);
-      continue;
-    }
-    if (preset || usedNames.has(name.toLowerCase())) return fail(t('backup.categoryConflict', { name }));
+    if (usedNames.has(name.toLowerCase())) return fail(t('backup.categoryConflict', { name }));
     usedNames.add(name.toLowerCase());
     const id = clock.id();
     categoryIds.set(item.id, id);
@@ -80,7 +73,7 @@ export function restoreBackup(
       name,
       icon: typeof item.icon === 'string' && isIconName(item.icon) ? item.icon : DEFAULT_ICON,
       isPreset: false,
-      sortOrder: typeof item.sortOrder === 'number' ? item.sortOrder : customs.length + presets.length,
+      sortOrder: typeof item.sortOrder === 'number' ? item.sortOrder : customs.length,
     });
   }
 

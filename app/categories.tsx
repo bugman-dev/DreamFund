@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Lock } from 'lucide-react-native';
 import { ICON_NAMES } from '../src/domain/icons';
 import type { Category } from '../src/domain/categories';
 import { AppIcon } from '../src/components/icons';
@@ -64,12 +63,12 @@ export default function CategoriesScreen() {
       <ScreenHeader title={text('categories.title')} onBack={() => router.back()} />
       <View style={styles.list}>
         {data.categories.map((category) => (
-          <Pressable key={category.id} accessibilityRole="button" onPress={() => { if (!category.isPreset) open(category); }} style={styles.row}>
+          <Pressable key={category.id} accessibilityRole="button" onPress={() => open(category)} style={styles.row}>
             <View style={styles.icon}>
               <AppIcon name={category.icon} size={18} color={colors.forest} />
             </View>
             <Text style={styles.name}>{category.name}</Text>
-            {category.isPreset ? <Lock color={colors.muted} size={16} /> : <Text style={styles.edit}>{text('categories.edit')}</Text>}
+            <Text style={styles.edit}>{text('categories.edit')}</Text>
           </Pressable>
         ))}
       </View>

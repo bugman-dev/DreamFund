@@ -2,7 +2,6 @@ import { randomUUID } from 'expo-crypto';
 import type { BackupFile } from '../domain/backup';
 import { restoreBackup } from '../domain/backup';
 import type { Category } from '../domain/categories';
-import { PRESET_CATEGORIES, presetCategoryId } from '../domain/categories';
 import { deviceClock } from '../domain/clock';
 import { isIconName } from '../domain/icons';
 import { BACKUP_VERSION, CATEGORY_NAME_LIMIT, DEFAULT_REMINDER_HOUR, DEFAULT_REMINDER_MINUTE, FALLBACK_ICON } from '../constants';
@@ -82,24 +81,21 @@ export async function ensureUser(user: SessionUser): Promise<void> {
       user.photoUrl,
       now,
     );
-    const existing = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) AS count FROM categories WHERE user_id = ?', user.sub);
-    if (!existing || existing.count === 0) {
-      for (const preset of PRESET_CATEGORIES) {
-        await db.runAsync(
-          'INSERT INTO categories (id, user_id, name, icon, is_preset, sort_order) VALUES (?, ?, ?, ?, 1, ?)',
-          presetCategoryId(user.sub, preset.key),
-          user.sub,
-          preset.name,
-          preset.icon,
-          preset.sortOrder,
-        );
-      }
-    }
+    await db.runAsync(
+      `DELETE FROM categories
+       WHERE user_id = ? AND is_preset = 1
+         AND id NOT IN (SELECT category_id FROM goals WHERE user_id = ?)`,
+      user.sub,
+      user.sub,
+    );
+    await db.runAsync('UPDATE categories SET is_preset = 0 WHERE user_id = ? AND is_preset = 1', user.sub);
     await db.runAsync(
       `INSERT INTO preferences (user_id, reminder_enabled, reminder_hour, reminder_minute)
-       VALUES (?, 0, 20, 0)
+       VALUES (?, 0, ?, ?)
        ON CONFLICT(user_id) DO NOTHING`,
       user.sub,
+      DEFAULT_REMINDER_HOUR,
+      DEFAULT_REMINDER_MINUTE,
     );
   });
 }
@@ -160,7 +156,6 @@ export async function updateCategory(userId: string, id: string, name: string, i
     const categories = await readCategories(userId);
     const current = categories.find((category) => category.id === id);
     if (!current) throw new Error(t('error.categoryMissing'));
-    if (current.isPreset) throw new Error(t('error.presetLocked'));
     if (categories.some((category) => category.id !== id && category.name.toLowerCase() === trimmed.toLowerCase())) {
       throw new Error(t('error.categoryExists'));
     }
@@ -174,7 +169,6 @@ export async function deleteCategory(userId: string, id: string): Promise<void> 
     const categories = await readCategories(userId);
     const current = categories.find((category) => category.id === id);
     if (!current) throw new Error(t('error.categoryMissing'));
-    if (current.isPreset) throw new Error(t('error.presetStay'));
     const state = await readState(userId);
     if (state.goals.some((goal) => goal.categoryId === id)) {
       throw new Error(t('error.categoryInUse'));
@@ -291,8 +285,7 @@ export async function buildBackup(userId: string): Promise<BackupFile> {
 }
 
 export async function importBackup(userId: string, raw: unknown): Promise<void> {
-  const presets = (await readCategories(userId)).filter((category) => category.isPreset);
-  const restored = restoreBackup(raw, presets, deviceClock());
+  const restored = restoreBackup(raw, deviceClock());
   if (!restored.ok) throw new Error(restored.error);
   const projected = project(restored.data.state);
   if (!projected.ok) throw new Error(projected.error);
@@ -302,7 +295,7 @@ export async function importBackup(userId: string, raw: unknown): Promise<void> 
       await db.runAsync('DELETE FROM audits WHERE user_id = ?', userId);
       await db.runAsync('DELETE FROM transactions WHERE user_id = ?', userId);
       await db.runAsync('DELETE FROM goals WHERE user_id = ?', userId);
-      await db.runAsync('DELETE FROM categories WHERE user_id = ? AND is_preset = 0', userId);
+      await db.runAsync('DELETE FROM categories WHERE user_id = ?', userId);
       for (const category of restored.data.categories) {
         await db.runAsync(
           'INSERT INTO categories (id, user_id, name, icon, is_preset, sort_order) VALUES (?, ?, ?, ?, 0, ?)',
