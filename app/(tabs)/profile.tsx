@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Platform, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import appConfig from '../../app.json';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { ChevronRight } from 'lucide-react-native';
 import { formatClock } from '../../src/domain/dates';
@@ -87,7 +88,7 @@ export default function ProfileScreen() {
       <Row label={text('profile.import')} onPress={() => setConfirming('import')} />
       <Text style={styles.group}>{text('profile.about')}</Text>
       <Card style={styles.about}>
-        <Text style={styles.aboutTitle}>{text('profile.version')}</Text>
+        <Text style={styles.aboutTitle}>{text('profile.version', { version: appConfig.expo.version })}</Text>
         <Text style={styles.aboutBody}>{text('profile.aboutBody')}</Text>
       </Card>
       {error ? <View style={styles.error}><ErrorText>{error}</ErrorText></View> : null}

@@ -183,7 +183,7 @@
   "profile.export": "Export backup",
   "profile.import": "Import backup",
   "profile.about": "About",
-  "profile.version": "Dream Fund 1.0.0",
+  "profile.version": "Dream Fund {version}",
   "profile.aboutBody": "A personal savings allocation tracker. Dream Fund records how you set money aside. It does not hold or move real money.",
   "profile.signOut": "Sign out",
   "profile.signOutTitle": "Sign out",
