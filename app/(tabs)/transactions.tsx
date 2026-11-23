@@ -11,19 +11,26 @@ import { useText, type MessageId } from '../../src/locale';
 import { colors } from '../../src/theme/colors';
 import { fonts } from '../../src/theme/type';
 
-const FILTERS: { id: 'all' | 'addition' | 'withdrawal' | 'transfer'; label: MessageId }[] = [
+const FILTERS = [
   { id: 'all', label: 'common.all' },
   { id: 'addition', label: 'tx.additions' },
   { id: 'withdrawal', label: 'tx.withdrawals' },
   { id: 'transfer', label: 'tx.transfers' },
-];
+] as const satisfies readonly { id: string; label: MessageId }[];
+
+type TransactionFilter = (typeof FILTERS)[number]['id'];
+
+function transactionFilter(value: string | string[] | undefined): TransactionFilter {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return FILTERS.some((filter) => filter.id === raw) ? (raw as TransactionFilter) : 'all';
+}
 
 export default function TransactionsScreen() {
   const text = useText();
   const router = useRouter();
   const params = useLocalSearchParams<{ goalId?: string; type?: string }>();
   const goalId = typeof params.goalId === 'string' ? params.goalId : '';
-  const type = typeof params.type === 'string' ? params.type : 'all';
+  const type = transactionFilter(params.type);
   const books = useBooks();
   const goal = books.presented.find((item) => item.id === goalId);
   const rows = useMemo(() => {
@@ -43,7 +50,7 @@ export default function TransactionsScreen() {
       <Title>{text('tx.title')}</Title>
       <View style={styles.filters}>
         {FILTERS.map((filter) => (
-          <FilterChip key={filter.id} label={text(filter.label)} selected={type === filter.id} onPress={() => router.setParams({ type: filter.id === 'all' ? '' : filter.id })} />
+          <FilterChip key={filter.id} label={text(filter.label)} selected={type === filter.id} onPress={() => router.setParams({ type: filter.id })} />
         ))}
       </View>
       {goal ? (
