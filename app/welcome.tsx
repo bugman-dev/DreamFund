@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Redirect } from 'expo-router';
 import { Leaf } from 'lucide-react-native';
@@ -6,7 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { googleConfigured, previewUser } from '../src/auth/google';
 import { useSession } from '../src/auth/session';
 import { useText } from '../src/locale';
-import { colors } from '../src/theme/colors';
+import type { Palette } from '../src/theme/palettes';
+import { useColors } from '../src/theme/Theme';
 import { fonts } from '../src/theme/type';
 
 const GoogleControls = lazy(() =>
@@ -14,6 +15,8 @@ const GoogleControls = lazy(() =>
 );
 
 export default function WelcomeScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   const insets = useSafeAreaInsets();
   const { user, signIn } = useSession();
@@ -26,7 +29,7 @@ export default function WelcomeScreen() {
       <View style={styles.hero}>
         <Text style={styles.kicker}>{text('welcome.kicker')}</Text>
         <View style={styles.leaf}>
-          <Leaf color={colors.paleSage} size={42} strokeWidth={1.6} />
+          <Leaf color={colors.statusBar === 'light' ? colors.onForest : colors.paleSage} size={42} strokeWidth={1.6} />
         </View>
         <Text style={styles.wordmark}>{text('welcome.wordmark')}</Text>
         <Text style={styles.quote}>{text('welcome.quote')}</Text>
@@ -46,15 +49,17 @@ export default function WelcomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Palette) {
+  return StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.ivory },
   hero: { flex: 1, margin: 20, borderRadius: 16, backgroundColor: colors.forest, alignItems: 'center', justifyContent: 'center', padding: 28 },
-  kicker: { fontFamily: fonts.medium, fontSize: 13, color: colors.paleSage, letterSpacing: 1.2, textTransform: 'uppercase' },
+  kicker: { fontFamily: fonts.medium, fontSize: 13, color: colors.statusBar === 'light' ? colors.onForest : colors.paleSage, letterSpacing: 1.2, textTransform: 'uppercase' },
   leaf: { width: 84, height: 84, borderRadius: 42, backgroundColor: 'rgba(221, 232, 221, 0.16)', alignItems: 'center', justifyContent: 'center', marginVertical: 22 },
-  wordmark: { fontFamily: fonts.bold, fontSize: 42, color: colors.white },
-  quote: { fontFamily: fonts.quote, fontSize: 20, color: colors.ivory, marginTop: 12, textAlign: 'center' },
+  wordmark: { fontFamily: fonts.bold, fontSize: 42, color: colors.onForest },
+  quote: { fontFamily: fonts.quote, fontSize: 20, color: colors.statusBar === 'light' ? colors.onForest : colors.ivory, marginTop: 12, textAlign: 'center' },
   footer: { paddingHorizontal: 20, gap: 12 },
   preview: { alignItems: 'center', paddingVertical: 8 },
   previewText: { fontFamily: fonts.semibold, fontSize: 15, color: colors.forest },
   error: { fontFamily: fonts.medium, fontSize: 13, color: colors.rose, textAlign: 'center' },
-});
+  });
+}

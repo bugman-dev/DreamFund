@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 import { formatDay } from '../domain/dates';
 import { useText } from '../locale';
-import { colors } from '../theme/colors';
+import type { Palette } from '../theme/palettes';
+import { useColors } from '../theme/Theme';
 import { fonts } from '../theme/type';
 import { Field } from './ui';
 
@@ -18,6 +20,8 @@ export function DateField({
   maximumDate?: string;
   optional?: boolean;
 }) {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   return (
     <Field label={label}>
@@ -50,7 +54,9 @@ export function DateField({
   );
 }
 
-const styles = StyleSheet.create({
-  hint: { fontFamily: fonts.regular, fontSize: 13, color: colors.muted, marginTop: 6 },
-  clear: { fontFamily: fonts.medium, fontSize: 13, color: colors.sage, marginTop: 8 },
-});
+function createStyles(colors: Palette) {
+  return StyleSheet.create({
+    hint: { fontFamily: fonts.regular, fontSize: 13, color: colors.muted, marginTop: 6 },
+    clear: { fontFamily: fonts.medium, fontSize: 13, color: colors.sage, marginTop: 8 },
+  });
+}

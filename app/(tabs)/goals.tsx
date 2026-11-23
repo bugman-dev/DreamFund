@@ -7,10 +7,13 @@ import { GoalCard } from '../../src/components/GoalCard';
 import { EmptyState, FilterChip, Screen, Title } from '../../src/components/ui';
 import { useBooks } from '../../src/data/useBooks';
 import { useText } from '../../src/locale';
-import { colors } from '../../src/theme/colors';
+import type { Palette } from '../../src/theme/palettes';
+import { useColors } from '../../src/theme/Theme';
 import { fonts } from '../../src/theme/type';
 
 export default function GoalsScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   const router = useRouter();
   const books = useBooks();
@@ -76,7 +79,8 @@ export default function GoalsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Palette) {
+  return StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingRight: 12 },
   searchButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
   search: {
@@ -93,4 +97,5 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   filters: { paddingHorizontal: 20, gap: 8, paddingBottom: 16 },
-});
+  });
+}

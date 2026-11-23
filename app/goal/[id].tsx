@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, Ellipsis, Minus, Plus } from 'lucide-react-native';
@@ -13,10 +13,13 @@ import { GoalImage } from '../../src/components/GoalImage';
 import { Button, CategoryChip, EmptyState } from '../../src/components/ui';
 import { useBooks } from '../../src/data/useBooks';
 import { useText } from '../../src/locale';
-import { colors } from '../../src/theme/colors';
+import type { Palette } from '../../src/theme/palettes';
+import { useColors } from '../../src/theme/Theme';
 import { fonts } from '../../src/theme/type';
 
 export default function GoalDetailsScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -154,6 +157,8 @@ export default function GoalDetailsScreen() {
 }
 
 function Ring({ progress }: { progress: number }) {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const radius = 28;
   const circumference = 2 * Math.PI * radius;
   const dash = (progress / PERCENT_MAX) * circumference;
@@ -178,7 +183,8 @@ function Ring({ progress }: { progress: number }) {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Palette) {
+  return StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.ivory },
   missing: { flex: 1, backgroundColor: colors.ivory, justifyContent: 'center' },
   hero: { height: 240, width: '100%' },
@@ -219,4 +225,5 @@ const styles = StyleSheet.create({
   menuItem: { paddingHorizontal: 16, paddingVertical: 12 },
   menuText: { fontFamily: fonts.medium, fontSize: 15, color: colors.ink },
   menuDanger: { fontFamily: fonts.medium, fontSize: 15, color: colors.rose },
-});
+  });
+}

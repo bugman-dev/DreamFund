@@ -7,7 +7,8 @@ import { todayIso } from '../domain/dates';
 import { formatInr, NOTE_LIMIT, parseRupees } from '../domain/ledger';
 import type { PresentedGoal } from '../data/present';
 import { useText } from '../locale';
-import { colors } from '../theme/colors';
+import type { Palette } from '../theme/palettes';
+import { useColors } from '../theme/Theme';
 import { fonts } from '../theme/type';
 import { useData } from '../data/store';
 import { ConfirmModal } from './ConfirmModal';
@@ -27,6 +28,8 @@ export function MoneyForm({
   initialGoalId?: string;
   onSubmit: (input: { goalId: string; counterGoalId?: string; amountPaise: number; date: string; note: string }) => Promise<void>;
 }) {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   const router = useRouter();
   const data = useData();
@@ -202,6 +205,8 @@ export function MoneyForm({
 }
 
 function GoalRow({ goal, detail, onPress }: { goal?: PresentedGoal; detail: string; onPress: () => void }) {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={styles.goal}>
@@ -215,7 +220,8 @@ function GoalRow({ goal, detail, onPress }: { goal?: PresentedGoal; detail: stri
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Palette) {
+  return StyleSheet.create({
   body: { paddingHorizontal: 20 },
   kicker: { fontFamily: fonts.medium, fontSize: 13, color: colors.muted, marginBottom: 8 },
   goal: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.white, borderRadius: 12, padding: 12, marginBottom: 16 },
@@ -229,4 +235,5 @@ const styles = StyleSheet.create({
   shortcutText: { fontFamily: fonts.medium, fontSize: 13, color: colors.forest },
   note: { minHeight: 88, borderRadius: 14, borderWidth: 1, borderColor: colors.grey, backgroundColor: colors.white, padding: 14, fontFamily: fonts.regular, fontSize: 15, color: colors.ink, textAlignVertical: 'top' },
   count: { alignSelf: 'flex-end', fontFamily: fonts.regular, fontSize: 12, color: colors.muted, marginTop: 6 },
-});
+  });
+}

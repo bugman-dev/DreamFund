@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { ChevronDown, ImagePlus } from 'lucide-react-native';
@@ -8,7 +8,8 @@ import type { Category } from '../domain/categories';
 import { formatInr } from '../domain/ledger';
 import { PRESET_IMAGE_PREFIX } from '../constants';
 import { useText } from '../locale';
-import { colors } from '../theme/colors';
+import type { Palette } from '../theme/palettes';
+import { useColors } from '../theme/Theme';
 import { fonts } from '../theme/type';
 import { CategorySheet } from './CategorySheet';
 import { DateField } from './DateField';
@@ -39,6 +40,8 @@ export function GoalForm({
   allocatedPaise?: number;
   onSubmit: (draft: GoalDraft) => Promise<void>;
 }) {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   const router = useRouter();
   const [name, setName] = useState(initial.name);
@@ -121,7 +124,8 @@ export function GoalForm({
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Palette) {
+  return StyleSheet.create({
   imageWrap: { marginHorizontal: 20, marginBottom: 8 },
   preview: { width: '100%', height: 160, borderRadius: 12 },
   upload: { position: 'absolute', right: 12, bottom: 12, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.white, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
@@ -131,4 +135,5 @@ const styles = StyleSheet.create({
   selectText: { flex: 1, fontFamily: fonts.medium, fontSize: 16, color: colors.ink },
   placeholder: { color: colors.muted },
   hint: { fontFamily: fonts.regular, fontSize: 13, color: colors.muted, marginTop: -8, marginBottom: 12 },
-});
+  });
+}

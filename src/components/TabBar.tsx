@@ -1,8 +1,10 @@
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { House, Plus, Receipt, Target, User } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useText, type MessageId } from '../locale';
-import { colors } from '../theme/colors';
+import type { Palette } from '../theme/palettes';
+import { useColors } from '../theme/Theme';
 import { fonts } from '../theme/type';
 import { useActions } from './ActionSheet';
 
@@ -20,6 +22,8 @@ const ITEMS: { name: string; label: MessageId | null; Icon: typeof House }[] = [
 ];
 
 export function DreamTabBar({ state, navigateToTab }: DreamTabBarProps) {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   const insets = useSafeAreaInsets();
   const { openActions } = useActions();
@@ -32,7 +36,7 @@ export function DreamTabBar({ state, navigateToTab }: DreamTabBarProps) {
           return (
             <Pressable key="plus" accessibilityRole="button" accessibilityLabel={text('common.create')} onPress={openActions} style={styles.plusWrap}>
               <View style={styles.plus}>
-                <Plus color={colors.white} size={28} strokeWidth={2.4} />
+                <Plus color={colors.onForest} size={28} strokeWidth={2.4} />
               </View>
             </Pressable>
           );
@@ -59,7 +63,8 @@ export function DreamTabBar({ state, navigateToTab }: DreamTabBarProps) {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Palette) {
+  return StyleSheet.create({
   bar: {
     flexDirection: 'row',
     backgroundColor: colors.white,
@@ -79,4 +84,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: -28,
   },
-});
+  });
+}

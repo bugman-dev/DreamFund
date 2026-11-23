@@ -4,7 +4,8 @@ import { Check, ChevronDown, ChevronRight, Search, X } from 'lucide-react-native
 import { ICON_NAMES } from '../domain/icons';
 import { useData } from '../data/store';
 import { useText } from '../locale';
-import { colors } from '../theme/colors';
+import type { Palette } from '../theme/palettes';
+import { useColors } from '../theme/Theme';
 import { fonts } from '../theme/type';
 import { AppIcon } from './icons';
 import { Button } from './ui';
@@ -20,6 +21,8 @@ export function CategorySheet({
   onClose: () => void;
   onSelect: (id: string) => void;
 }) {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   const data = useData();
   const [query, setQuery] = useState('');
@@ -108,7 +111,7 @@ export function CategorySheet({
                     onPress={() => setIcon(item)}
                     style={[styles.choice, icon === item && styles.choiceSelected]}
                   >
-                    <AppIcon name={item} size={18} color={icon === item ? colors.white : colors.forest} />
+                    <AppIcon name={item} size={18} color={icon === item ? colors.onForest : colors.forest} />
                   </Pressable>
                 ))}
               </View>
@@ -122,7 +125,8 @@ export function CategorySheet({
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Palette) {
+  return StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.ivory, paddingTop: 18 },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12 },
   iconButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
@@ -164,4 +168,5 @@ const styles = StyleSheet.create({
   choice: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.paleSage, alignItems: 'center', justifyContent: 'center' },
   choiceSelected: { backgroundColor: colors.forest },
   error: { fontFamily: fonts.medium, fontSize: 13, color: colors.rose, marginBottom: 10 },
-});
+  });
+}

@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useText } from '../locale';
-import { colors } from '../theme/colors';
+import type { Palette } from '../theme/palettes';
+import { useColors } from '../theme/Theme';
 import { fonts } from '../theme/type';
 import { Button } from './ui';
 
@@ -23,6 +25,8 @@ export function ConfirmModal({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
@@ -44,11 +48,13 @@ export function ConfirmModal({
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Palette) {
+  return StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(30, 40, 35, 0.4)', justifyContent: 'center', padding: 24 },
   card: { backgroundColor: colors.white, borderRadius: 12, padding: 20 },
   title: { fontFamily: fonts.semibold, fontSize: 20, color: colors.ink },
   message: { fontFamily: fonts.regular, fontSize: 15, color: colors.muted, lineHeight: 22, marginTop: 8, marginBottom: 18 },
   actions: { flexDirection: 'row', gap: 10 },
   action: { flex: 1 },
-});
+  });
+}

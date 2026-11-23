@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
@@ -8,10 +8,13 @@ import { AppIcon } from '../src/components/icons';
 import { Button, ErrorText, Screen, ScreenHeader } from '../src/components/ui';
 import { useData } from '../src/data/store';
 import { useText } from '../src/locale';
-import { colors } from '../src/theme/colors';
+import type { Palette } from '../src/theme/palettes';
+import { useColors } from '../src/theme/Theme';
 import { fonts } from '../src/theme/type';
 
 export default function CategoriesScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   const router = useRouter();
   const data = useData();
@@ -94,7 +97,7 @@ export default function CategoriesScreen() {
             <View style={styles.icons}>
               {ICON_NAMES.map((item) => (
                 <Pressable key={item} accessibilityRole="button" onPress={() => setIcon(item)} style={[styles.choice, icon === item && styles.choiceSelected]}>
-                  <AppIcon name={item} size={16} color={icon === item ? colors.white : colors.forest} />
+                  <AppIcon name={item} size={16} color={icon === item ? colors.onForest : colors.forest} />
                 </Pressable>
               ))}
             </View>
@@ -118,7 +121,8 @@ export default function CategoriesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Palette) {
+  return StyleSheet.create({
   list: { paddingHorizontal: 20, gap: 8 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.white, borderRadius: 10, padding: 12 },
   icon: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.paleSage, alignItems: 'center', justifyContent: 'center' },
@@ -136,4 +140,5 @@ const styles = StyleSheet.create({
   icons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   choice: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.paleSage, alignItems: 'center', justifyContent: 'center' },
   choiceSelected: { backgroundColor: colors.forest },
-});
+  });
+}

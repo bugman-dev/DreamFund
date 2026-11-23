@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Redirect, Tabs } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { useSession } from '../../src/auth/session';
@@ -5,9 +6,12 @@ import { DreamTabBar } from '../../src/components/TabBar';
 import { EmptyState, LoadingScreen } from '../../src/components/ui';
 import { useData } from '../../src/data/store';
 import { useText } from '../../src/locale';
-import { colors } from '../../src/theme/colors';
+import type { Palette } from '../../src/theme/palettes';
+import { useColors } from '../../src/theme/Theme';
 
 export default function TabsLayout() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   const { user, ready } = useSession();
   const data = useData();
@@ -35,7 +39,9 @@ export default function TabsLayout() {
   );
 }
 
-const styles = StyleSheet.create({
-  host: { flex: 1 },
-  cover: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: colors.ivory },
-});
+function createStyles(colors: Palette) {
+  return StyleSheet.create({
+    host: { flex: 1 },
+    cover: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: colors.ivory },
+  });
+}

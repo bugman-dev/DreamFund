@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { GOAL_DELETED_REASON } from '../../src/constants';
@@ -9,10 +9,13 @@ import { DateField } from '../../src/components/DateField';
 import { Button, ErrorText, Field, Screen, ScreenHeader } from '../../src/components/ui';
 import { useBooks } from '../../src/data/useBooks';
 import { useText } from '../../src/locale';
-import { colors } from '../../src/theme/colors';
+import type { Palette } from '../../src/theme/palettes';
+import { useColors } from '../../src/theme/Theme';
 import { fonts } from '../../src/theme/type';
 
 export default function EditTransactionScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -31,6 +34,8 @@ export default function EditTransactionScreen() {
 }
 
 function Editor({ tx }: { tx: NonNullable<ReturnType<typeof useBooks>['transactions'][number]> }) {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   const router = useRouter();
   const books = useBooks();
@@ -125,7 +130,8 @@ function Editor({ tx }: { tx: NonNullable<ReturnType<typeof useBooks>['transacti
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Palette) {
+  return StyleSheet.create({
   body: { paddingHorizontal: 20 },
   help: { fontFamily: fonts.regular, fontSize: 14, color: colors.muted, lineHeight: 20, marginBottom: 12 },
   missing: { fontFamily: fonts.regular, fontSize: 15, color: colors.muted, padding: 20 },
@@ -137,5 +143,6 @@ const styles = StyleSheet.create({
   choice: { borderRadius: 99, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.grey, paddingHorizontal: 12, paddingVertical: 8 },
   choiceOn: { backgroundColor: colors.forest, borderColor: colors.forest },
   choiceText: { fontFamily: fonts.medium, fontSize: 13, color: colors.ink },
-  choiceTextOn: { color: colors.white },
-});
+  choiceTextOn: { color: colors.onForest },
+  });
+}

@@ -1,14 +1,17 @@
 import { ChevronLeft } from 'lucide-react-native';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
-import type { ReactNode } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useMemo, type ReactNode } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PERCENT_MAX } from '../constants';
 import { useText } from '../locale';
-import { colors } from '../theme/colors';
+import type { Palette } from '../theme/palettes';
+import { useColors } from '../theme/Theme';
 import { fonts } from '../theme/type';
 import { AppIcon } from './icons';
 
 export function LoadingScreen() {
+  const colors = useColors();
+  const styles = useUiStyles();
   return (
     <View style={styles.fill}>
       <ActivityIndicator color={colors.forest} />
@@ -25,6 +28,7 @@ export function Screen({
   footer?: ReactNode;
   scroll?: boolean;
 }) {
+  const styles = useUiStyles();
   const insets = useSafeAreaInsets();
   const body = scroll ? (
     <ScrollView
@@ -55,6 +59,8 @@ export function ScreenHeader({
   onBack: () => void;
   right?: ReactNode;
 }) {
+  const colors = useColors();
+  const styles = useUiStyles();
   const text = useText();
   return (
     <View style={styles.header}>
@@ -68,10 +74,12 @@ export function ScreenHeader({
 }
 
 export function Title({ children }: { children: string }) {
+  const styles = useUiStyles();
   return <Text style={styles.title}>{children}</Text>;
 }
 
 export function SectionLabel({ children, action, onAction }: { children: string; action?: string; onAction?: () => void }) {
+  const styles = useUiStyles();
   return (
     <View style={styles.sectionRow}>
       <Text style={styles.section}>{children}</Text>
@@ -95,6 +103,7 @@ export function Button({
   tone?: 'primary' | 'danger' | 'ghost';
   disabled?: boolean;
 }) {
+  const styles = useUiStyles();
   return (
     <Pressable
       accessibilityRole="button"
@@ -116,6 +125,7 @@ export function Button({
 }
 
 export function Field({ label, error, children }: { label: string; error?: string | null; children: ReactNode }) {
+  const styles = useUiStyles();
   return (
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>{label}</Text>
@@ -136,6 +146,8 @@ export function TextField({
   placeholder?: string;
   multiline?: boolean;
 }) {
+  const colors = useColors();
+  const styles = useUiStyles();
   return (
     <TextInput
       value={value}
@@ -149,10 +161,12 @@ export function TextField({
 }
 
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
+  const styles = useUiStyles();
   return <View style={[styles.card, style]}>{children}</View>;
 }
 
 export function ProgressBar({ progress }: { progress: number }) {
+  const styles = useUiStyles();
   return (
     <View style={styles.track}>
       <View style={[styles.fillBar, { width: `${Math.max(0, Math.min(PERCENT_MAX, progress))}%` }]} />
@@ -161,6 +175,7 @@ export function ProgressBar({ progress }: { progress: number }) {
 }
 
 export function CategoryChip({ name, icon, accent }: { name: string; icon: string; accent: string }) {
+  const styles = useUiStyles();
   return (
     <View style={styles.chip}>
       <AppIcon name={icon} size={12} color={accent} strokeWidth={2.2} />
@@ -170,6 +185,7 @@ export function CategoryChip({ name, icon, accent }: { name: string; icon: strin
 }
 
 export function FilterChip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+  const styles = useUiStyles();
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={[styles.filter, selected && styles.filterSelected]}>
       <Text style={[styles.filterText, selected && styles.filterTextSelected]}>{label}</Text>
@@ -188,6 +204,7 @@ export function EmptyState({
   action?: string;
   onAction?: () => void;
 }) {
+  const styles = useUiStyles();
   return (
     <View style={styles.empty}>
       <Text style={styles.emptyTitle}>{title}</Text>
@@ -198,10 +215,12 @@ export function EmptyState({
 }
 
 export function ErrorText({ children }: { children: string }) {
+  const styles = useUiStyles();
   return <Text style={styles.error}>{children}</Text>;
 }
 
 export function NoticeBanner({ message }: { message: string | null }) {
+  const styles = useUiStyles();
   const insets = useSafeAreaInsets();
   if (!message) return null;
   return (
@@ -211,17 +230,13 @@ export function NoticeBanner({ message }: { message: string | null }) {
   );
 }
 
-export const text = {
-  display: { fontFamily: fonts.bold, fontSize: 36, color: colors.ink, letterSpacing: -0.6 } satisfies TextStyle,
-  h1: { fontFamily: fonts.bold, fontSize: 28, color: colors.ink } satisfies TextStyle,
-  h2: { fontFamily: fonts.semibold, fontSize: 20, color: colors.ink } satisfies TextStyle,
-  h3: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ink } satisfies TextStyle,
-  body: { fontFamily: fonts.regular, fontSize: 15, color: colors.ink, lineHeight: 22 } satisfies TextStyle,
-  small: { fontFamily: fonts.regular, fontSize: 13, color: colors.muted } satisfies TextStyle,
-  label: { fontFamily: fonts.medium, fontSize: 12, color: colors.muted } satisfies TextStyle,
-};
+function useUiStyles() {
+  const colors = useColors();
+  return useMemo(() => createUiStyles(colors), [colors]);
+}
 
-const styles = StyleSheet.create({
+function createUiStyles(colors: Palette) {
+  return StyleSheet.create({
   flex: { flex: 1 },
   fill: { flex: 1, backgroundColor: colors.ivory },
   footer: { paddingHorizontal: 20, paddingTop: 8, backgroundColor: colors.ivory },
@@ -236,7 +251,7 @@ const styles = StyleSheet.create({
   buttonPrimary: { backgroundColor: colors.forest },
   buttonDanger: { backgroundColor: colors.rose },
   buttonGhost: { backgroundColor: colors.white, borderWidth: 1, borderColor: colors.forest },
-  buttonText: { fontFamily: fonts.semibold, fontSize: 16, color: colors.white },
+  buttonText: { fontFamily: fonts.semibold, fontSize: 16, color: colors.onForest },
   buttonTextGhost: { color: colors.forest },
   disabled: { opacity: 0.45 },
   pressed: { opacity: 0.86 },
@@ -271,7 +286,7 @@ const styles = StyleSheet.create({
   filter: { borderRadius: 99, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.grey },
   filterSelected: { backgroundColor: colors.forest, borderColor: colors.forest },
   filterText: { fontFamily: fonts.medium, fontSize: 13, color: colors.ink },
-  filterTextSelected: { color: colors.white },
+  filterTextSelected: { color: colors.onForest },
   empty: { paddingHorizontal: 20, paddingVertical: 28, gap: 10 },
   emptyTitle: { fontFamily: fonts.semibold, fontSize: 22, color: colors.ink },
   emptyBody: { fontFamily: fonts.regular, fontSize: 15, color: colors.muted, lineHeight: 22, marginBottom: 8 },
@@ -287,7 +302,8 @@ const styles = StyleSheet.create({
     zIndex: 20,
   },
   noticeText: { fontFamily: fonts.medium, fontSize: 14, color: colors.forest, textAlign: 'center' },
-});
+  });
+}
 
 export function pagePadding(): ViewStyle {
   return { paddingHorizontal: 20 };

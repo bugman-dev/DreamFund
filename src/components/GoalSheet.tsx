@@ -4,7 +4,8 @@ import { Check, Search, X } from 'lucide-react-native';
 import { formatInr } from '../domain/ledger';
 import type { PresentedGoal } from '../data/present';
 import { useText } from '../locale';
-import { colors } from '../theme/colors';
+import type { Palette } from '../theme/palettes';
+import { useColors } from '../theme/Theme';
 import { fonts } from '../theme/type';
 import { GoalImage } from './GoalImage';
 
@@ -21,6 +22,8 @@ export function GoalSheet({
   onClose: () => void;
   onSelect: (id: string) => void;
 }) {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   const [query, setQuery] = useState('');
 
@@ -74,7 +77,8 @@ export function GoalSheet({
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Palette) {
+  return StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.ivory, paddingTop: 18 },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12 },
   iconButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
@@ -100,4 +104,5 @@ const styles = StyleSheet.create({
   copy: { flex: 1 },
   name: { fontFamily: fonts.medium, fontSize: 16, color: colors.ink },
   meta: { fontFamily: fonts.regular, fontSize: 13, color: colors.muted, marginTop: 2 },
-});
+  });
+}

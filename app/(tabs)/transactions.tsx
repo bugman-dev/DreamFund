@@ -8,7 +8,8 @@ import { transactionTitle } from '../../src/data/present';
 import { EmptyState, FilterChip, Screen, Title } from '../../src/components/ui';
 import { useBooks } from '../../src/data/useBooks';
 import { useText, type MessageId } from '../../src/locale';
-import { colors } from '../../src/theme/colors';
+import type { Palette } from '../../src/theme/palettes';
+import { useColors } from '../../src/theme/Theme';
 import { fonts } from '../../src/theme/type';
 
 const FILTERS = [
@@ -26,6 +27,8 @@ function transactionFilter(value: string | string[] | undefined): TransactionFil
 }
 
 export default function TransactionsScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   const router = useRouter();
   const params = useLocalSearchParams<{ goalId?: string; type?: string }>();
@@ -91,7 +94,8 @@ export default function TransactionsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Palette) {
+  return StyleSheet.create({
   filters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 20, paddingVertical: 16 },
   goalFilter: { alignSelf: 'flex-start', marginHorizontal: 20, marginBottom: 8, backgroundColor: colors.paleSage, borderRadius: 99, paddingHorizontal: 12, paddingVertical: 6 },
   goalFilterText: { fontFamily: fonts.medium, fontSize: 13, color: colors.forest },
@@ -107,4 +111,5 @@ const styles = StyleSheet.create({
   amount: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ink },
   amountPositive: { color: colors.sage },
   amountNegative: { color: colors.rose },
-});
+  });
+}

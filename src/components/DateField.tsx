@@ -1,10 +1,11 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Calendar } from 'lucide-react-native';
 import { formatDay } from '../domain/dates';
 import { useText } from '../locale';
-import { colors } from '../theme/colors';
+import type { Palette } from '../theme/palettes';
+import { useColors } from '../theme/Theme';
 import { fonts } from '../theme/type';
 import { Button, Field } from './ui';
 
@@ -21,6 +22,8 @@ export function DateField({
   maximumDate?: string;
   optional?: boolean;
 }) {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(value || todayFromDevice());
@@ -92,7 +95,8 @@ function toIso(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Palette) {
+  return StyleSheet.create({
   row: {
     minHeight: 52,
     borderRadius: 14,
@@ -109,4 +113,5 @@ const styles = StyleSheet.create({
   clear: { fontFamily: fonts.medium, fontSize: 13, color: colors.sage, marginTop: 8 },
   backdrop: { flex: 1, backgroundColor: 'rgba(30, 40, 35, 0.35)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: colors.white, padding: 20, borderTopLeftRadius: 24, borderTopRightRadius: 24, gap: 12 },
-});
+  });
+}

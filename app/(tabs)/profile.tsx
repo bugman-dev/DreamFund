@@ -1,19 +1,29 @@
-import { useState } from 'react';
-import { Platform, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Modal, Platform, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import appConfig from '../../app.json';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { ChevronRight } from 'lucide-react-native';
+import { Check, ChevronRight, X } from 'lucide-react-native';
 import { formatClock } from '../../src/domain/dates';
 import { useSession } from '../../src/auth/session';
 import { ConfirmModal } from '../../src/components/ConfirmModal';
 import { Button, Card, ErrorText, Screen, Title } from '../../src/components/ui';
 import { useData } from '../../src/data/store';
-import { useText } from '../../src/locale';
-import { colors } from '../../src/theme/colors';
+import { useText, type MessageId } from '../../src/locale';
+import { PALETTE_IDS, palettes, type Palette, type PaletteId } from '../../src/theme/palettes';
+import { useColors, useTheme } from '../../src/theme/Theme';
 import { fonts } from '../../src/theme/type';
 
+const THEME_LABEL: Record<PaletteId, MessageId> = {
+  forest: 'theme.forest',
+  ocean: 'theme.ocean',
+  dusk: 'theme.dusk',
+};
+
 export default function ProfileScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { id: themeId, setTheme } = useTheme();
   const text = useText();
   const router = useRouter();
   const { user, signOut } = useSession();
@@ -21,6 +31,8 @@ export default function ProfileScreen() {
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<'signout' | 'import' | null>(null);
   const [pickingTime, setPickingTime] = useState(false);
+  const [themesOpen, setThemesOpen] = useState(false);
+  const [draftTheme, setDraftTheme] = useState<PaletteId>(themeId);
   const initial = user?.name?.trim().charAt(0).toUpperCase() || 'D';
 
   async function toggleReminder(enabled: boolean) {
@@ -55,6 +67,14 @@ export default function ProfileScreen() {
       </Card>
       <Text style={styles.group}>{text('profile.preferences')}</Text>
       <Row label={text('profile.currency')} value={text('profile.currencyValue')} />
+      <Row
+        label={text('profile.appThemes')}
+        value={text(THEME_LABEL[themeId])}
+        onPress={() => {
+          setDraftTheme(themeId);
+          setThemesOpen(true);
+        }}
+      />
       <Row label={text('profile.categories')} onPress={() => router.push('/categories')} />
       {Platform.OS === 'web' ? null : (
         <View style={styles.row}>
@@ -106,6 +126,39 @@ export default function ProfileScreen() {
           void signOut().then(() => router.replace('/welcome'));
         }}
       />
+      <Modal visible={themesOpen} transparent animationType="fade" onRequestClose={() => setThemesOpen(false)}>
+        <Pressable style={styles.backdrop} onPress={() => setThemesOpen(false)}>
+          <Pressable style={styles.sheet} onPress={() => undefined}>
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>{text('profile.appThemes')}</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel={text('common.close')} onPress={() => setThemesOpen(false)} style={styles.close}>
+                <X color={colors.ink} size={22} />
+              </Pressable>
+            </View>
+            <View style={styles.swatches}>
+              {PALETTE_IDS.map((paletteId) => {
+                const selected = draftTheme === paletteId;
+                const swatch = palettes[paletteId];
+                return (
+                  <Pressable key={paletteId} accessibilityRole="button" accessibilityState={{ selected }} onPress={() => setDraftTheme(paletteId)} style={styles.themeOption}>
+                    <View style={[styles.swatch, { backgroundColor: swatch.forest }, selected && styles.swatchSelected]}>
+                      {selected ? <Check color={swatch.onForest} size={22} strokeWidth={2.6} /> : null}
+                    </View>
+                    <Text style={styles.themeName}>{text(THEME_LABEL[paletteId])}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Button
+              label={text('profile.applyTheme')}
+              onPress={() => {
+                setTheme(draftTheme);
+                setThemesOpen(false);
+              }}
+            />
+          </Pressable>
+        </Pressable>
+      </Modal>
       <ConfirmModal
         visible={confirming === 'import'}
         title={text('profile.restoreTitle')}
@@ -123,6 +176,8 @@ export default function ProfileScreen() {
 }
 
 function Row({ label, value, onPress }: { label: string; value?: string; onPress?: () => void }) {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const content = (
     <>
       <Text style={styles.rowLabel}>{label}</Text>
@@ -146,7 +201,8 @@ function clockDate(hour: number, minute: number): Date {
   return date;
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Palette) {
+  return StyleSheet.create({
   account: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 20, marginTop: 16 },
   avatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.paleSage, alignItems: 'center', justifyContent: 'center' },
   avatarText: { fontFamily: fonts.bold, fontSize: 20, color: colors.forest },
@@ -164,4 +220,15 @@ const styles = StyleSheet.create({
   aboutBody: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 21, color: colors.muted, marginTop: 6 },
   error: { paddingHorizontal: 20 },
   signOut: { paddingHorizontal: 20, marginTop: 20 },
-});
+  backdrop: { flex: 1, backgroundColor: 'rgba(30, 40, 35, 0.4)', justifyContent: 'flex-end' },
+  sheet: { backgroundColor: colors.ivory, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 16 },
+  sheetHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  sheetTitle: { flex: 1, fontFamily: fonts.semibold, fontSize: 20, color: colors.ink },
+  close: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  swatches: { flexDirection: 'row', gap: 12 },
+  themeOption: { flex: 1, alignItems: 'center', gap: 8 },
+  swatch: { width: '100%', aspectRatio: 1, maxWidth: 88, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  swatchSelected: { borderWidth: 3, borderColor: colors.ink },
+  themeName: { fontFamily: fonts.medium, fontSize: 13, color: colors.ink, textAlign: 'center' },
+  });
+}

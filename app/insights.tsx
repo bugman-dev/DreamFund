@@ -9,7 +9,8 @@ import { accentFor } from '../src/theme/colors';
 import { EmptyState, FilterChip, LoadingScreen, Screen, ScreenHeader } from '../src/components/ui';
 import { useBooks } from '../src/data/useBooks';
 import { useText, type MessageId } from '../src/locale';
-import { colors } from '../src/theme/colors';
+import type { Palette } from '../src/theme/palettes';
+import { useColors } from '../src/theme/Theme';
 import { fonts } from '../src/theme/type';
 
 const PERIODS: { id: Period; label: MessageId }[] = [
@@ -19,6 +20,8 @@ const PERIODS: { id: Period; label: MessageId }[] = [
 ];
 
 export default function InsightsScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   const router = useRouter();
   const books = useBooks();
@@ -31,8 +34,8 @@ export default function InsightsScreen() {
       if (goal.allocatedPaise <= 0) continue;
       totals.set(goal.categoryName, (totals.get(goal.categoryName) ?? 0) + goal.allocatedPaise);
     }
-    return [...totals.entries()].map(([name, value]) => ({ name, value, color: accentFor(name) }));
-  }, [books.active]);
+    return [...totals.entries()].map(([name, value]) => ({ name, value, color: accentFor(name, colors) }));
+  }, [books.active, colors]);
 
   return (
     <Screen>
@@ -80,6 +83,8 @@ export default function InsightsScreen() {
 }
 
 function Donut({ slices, total, caption }: { slices: { value: number; color: string }[]; total: number; caption: string }) {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const radius = 54;
   const circumference = 2 * Math.PI * radius;
   let offset = 0;
@@ -117,7 +122,8 @@ function Donut({ slices, total, caption }: { slices: { value: number; color: str
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Palette) {
+  return StyleSheet.create({
   filters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 20, paddingBottom: 16 },
   stats: { flexDirection: 'row', gap: 12, paddingHorizontal: 20 },
   stat: { flex: 1, backgroundColor: colors.white, borderRadius: 12, padding: 16 },
@@ -136,4 +142,5 @@ const styles = StyleSheet.create({
   swatch: { width: 10, height: 10, borderRadius: 5 },
   legendName: { flex: 1, fontFamily: fonts.medium, fontSize: 14, color: colors.ink },
   legendValue: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ink },
-});
+  });
+}

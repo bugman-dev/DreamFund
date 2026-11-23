@@ -1,13 +1,17 @@
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { formatInr } from '../domain/ledger';
 import type { PresentedGoal } from '../data/present';
 import { useText } from '../locale';
-import { colors } from '../theme/colors';
+import type { Palette } from '../theme/palettes';
+import { useColors } from '../theme/Theme';
 import { fonts } from '../theme/type';
 import { GoalImage } from './GoalImage';
 import { CategoryChip, ProgressBar } from './ui';
 
 export function GoalCard({ goal, note, onPress }: { goal: PresentedGoal; note?: string; onPress: () => void }) {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={goal.name} onPress={onPress} style={styles.card}>
@@ -30,7 +34,8 @@ export function GoalCard({ goal, note, onPress }: { goal: PresentedGoal; note?: 
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Palette) {
+  return StyleSheet.create({
   card: { flexDirection: 'row', gap: 12, backgroundColor: colors.white, borderRadius: 12, padding: 12, marginHorizontal: 20, marginBottom: 12 },
   image: { width: 72, height: 72, borderRadius: 8 },
   body: { flex: 1, justifyContent: 'center', gap: 6 },
@@ -42,4 +47,5 @@ const styles = StyleSheet.create({
   percent: { fontFamily: fonts.semibold, fontSize: 12, color: colors.sage },
   note: { fontFamily: fonts.regular, fontSize: 13, color: colors.ink },
   done: { fontFamily: fonts.medium, fontSize: 12, color: colors.sage },
-});
+  });
+}

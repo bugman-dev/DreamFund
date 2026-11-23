@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Bell, Minus, PieChart, Plus, Target } from 'lucide-react-native';
@@ -8,7 +9,8 @@ import { GoalCard } from '../../src/components/GoalCard';
 import { EmptyState, ProgressBar, Screen, SectionLabel } from '../../src/components/ui';
 import { useBooks } from '../../src/data/useBooks';
 import { useText, type MessageId } from '../../src/locale';
-import { colors } from '../../src/theme/colors';
+import type { Palette } from '../../src/theme/palettes';
+import { useColors } from '../../src/theme/Theme';
 import { fonts } from '../../src/theme/type';
 
 const ACTIONS: { label: MessageId; href: '/money/add' | '/money/withdraw' | '/goal/create' | '/insights'; Icon: typeof Plus }[] = [
@@ -19,6 +21,8 @@ const ACTIONS: { label: MessageId; href: '/money/add' | '/money/withdraw' | '/go
 ];
 
 export default function HomeScreen() {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   const router = useRouter();
   const { user } = useSession();
@@ -69,7 +73,8 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: Palette) {
+  return StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 32, paddingBottom: 16 },
   greetingBlock: { flex: 1 },
   greeting: { fontFamily: fonts.regular, fontSize: 16, color: colors.muted },
@@ -86,4 +91,5 @@ const styles = StyleSheet.create({
   action: { flex: 1, alignItems: 'center', gap: 8 },
   actionIcon: { width: 68, height: 68, borderRadius: 12, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
   actionLabel: { fontFamily: fonts.medium, fontSize: 12, color: colors.ink, textAlign: 'center' },
-});
+  });
+}
