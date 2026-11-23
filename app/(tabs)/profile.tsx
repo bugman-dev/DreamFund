@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import appConfig from '../../app.json';
-import { Check, ChevronRight, X } from 'lucide-react-native';
+import { Check, ChevronRight } from 'lucide-react-native';
 import { formatClock } from '../../src/domain/dates';
 import { useSession } from '../../src/auth/session';
 import { useCurrency } from '../../src/currency/Currency';
@@ -125,12 +125,7 @@ export default function ProfileScreen() {
       <Modal visible={currencyOpen} transparent animationType="fade" onRequestClose={() => setCurrencyOpen(false)}>
         <Pressable style={styles.backdrop} onPress={() => setCurrencyOpen(false)}>
           <Pressable style={styles.sheet} onPress={() => undefined}>
-            <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>{text('profile.currency')}</Text>
-              <Pressable accessibilityRole="button" accessibilityLabel={text('common.close')} onPress={() => setCurrencyOpen(false)} style={styles.close}>
-                <X color={colors.ink} size={22} />
-              </Pressable>
-            </View>
+            <Text style={styles.sheetTitle}>{text('profile.currency')}</Text>
             <View style={styles.currencyList}>
               {CURRENCY_IDS.map((id) => {
                 const selected = draftCurrency === id;
@@ -157,12 +152,7 @@ export default function ProfileScreen() {
       <Modal visible={themesOpen} transparent animationType="fade" onRequestClose={() => setThemesOpen(false)}>
         <Pressable style={styles.backdrop} onPress={() => setThemesOpen(false)}>
           <Pressable style={styles.sheet} onPress={() => undefined}>
-            <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>{text('profile.appThemes')}</Text>
-              <Pressable accessibilityRole="button" accessibilityLabel={text('common.close')} onPress={() => setThemesOpen(false)} style={styles.close}>
-                <X color={colors.ink} size={22} />
-              </Pressable>
-            </View>
+            <Text style={styles.sheetTitle}>{text('profile.appThemes')}</Text>
             <View style={styles.swatches}>
               {PALETTE_IDS.map((paletteId) => {
                 const selected = draftTheme === paletteId;
@@ -245,17 +235,15 @@ function createStyles(colors: Palette) {
   signOut: { paddingHorizontal: 20, marginTop: 20 },
   backdrop: { flex: 1, backgroundColor: 'rgba(30, 40, 35, 0.4)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: colors.ivory, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 16 },
-  sheetHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  sheetTitle: { flex: 1, fontFamily: fonts.semibold, fontSize: 20, color: colors.ink },
-  close: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  sheetTitle: { fontFamily: fonts.semibold, fontSize: 20, color: colors.ink },
   swatches: { flexDirection: 'row', gap: 12 },
   themeOption: { flex: 1, alignItems: 'center', gap: 8 },
   swatch: { width: '100%', aspectRatio: 1, maxWidth: 88, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   swatchSelected: { borderWidth: 3, borderColor: colors.ink },
   themeName: { fontFamily: fonts.medium, fontSize: 13, color: colors.ink, textAlign: 'center' },
   currencyList: { gap: 8 },
-  currencyRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.white, borderRadius: 12, borderWidth: 2, borderColor: colors.white, paddingHorizontal: 16, paddingVertical: 14 },
-  currencyRowSelected: { borderColor: colors.forest },
+  currencyRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.white, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14 },
+  currencyRowSelected: { backgroundColor: colors.paleSage },
   currencyName: { flex: 1, fontFamily: fonts.medium, fontSize: 16, color: colors.ink },
   currencyMark: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ink },
   currencyCheckSpace: { width: 18 },

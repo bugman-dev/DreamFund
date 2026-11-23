@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { X } from 'lucide-react-native';
 import { ICON_NAMES } from '../src/domain/icons';
 import type { Category } from '../src/domain/categories';
 import { AppIcon } from '../src/components/icons';
@@ -85,14 +84,9 @@ export default function CategoriesScreen() {
         <Button label={text('categories.add')} onPress={() => open()} />
       </View>
       <Modal visible={openSheet} transparent animationType="fade" onRequestClose={close}>
-        <View style={styles.backdrop}>
-          <View style={styles.sheet}>
-            <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>{creating ? text('categories.new') : text('categories.editTitle')}</Text>
-              <Pressable accessibilityRole="button" accessibilityLabel={text('common.close')} onPress={close} hitSlop={8} style={styles.close}>
-                <X color={colors.ink} size={22} />
-              </Pressable>
-            </View>
+        <Pressable style={styles.backdrop} onPress={close}>
+          <Pressable style={styles.sheet} onPress={() => undefined}>
+            <Text style={styles.sheetTitle}>{creating ? text('categories.new') : text('categories.editTitle')}</Text>
             <TextInput value={name} onChangeText={setName} placeholder={text('categories.namePlaceholder')} placeholderTextColor={colors.muted} style={styles.input} />
             <View style={styles.icons}>
               {ICON_NAMES.map((item) => (
@@ -114,8 +108,8 @@ export default function CategoriesScreen() {
             ) : (
               <Button label={text('categories.add')} onPress={() => void save()} />
             )}
-          </View>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
     </Screen>
   );
@@ -131,9 +125,7 @@ function createStyles(colors: Palette) {
   add: { padding: 20 },
   backdrop: { flex: 1, backgroundColor: 'rgba(30, 40, 35, 0.4)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: colors.ivory, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 12, maxHeight: '80%' },
-  sheetHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  sheetTitle: { flex: 1, fontFamily: fonts.semibold, fontSize: 20, color: colors.ink },
-  close: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  sheetTitle: { fontFamily: fonts.semibold, fontSize: 20, color: colors.ink },
   actions: { flexDirection: 'row', gap: 10 },
   action: { flex: 1 },
   input: { backgroundColor: colors.white, borderRadius: 14, borderWidth: 1, borderColor: colors.grey, minHeight: 48, paddingHorizontal: 14, fontFamily: fonts.regular, fontSize: 16, color: colors.ink },
