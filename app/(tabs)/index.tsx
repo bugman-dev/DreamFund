@@ -48,7 +48,7 @@ export default function HomeScreen() {
         {ACTIONS.map((action) => (
           <Pressable key={action.href} accessibilityRole="button" accessibilityLabel={text(action.label)} style={styles.action} onPress={() => router.push(action.href)}>
             <View style={styles.actionIcon}>
-              <action.Icon color={colors.forest} size={20} />
+              <action.Icon color={colors.forest} size={22} />
             </View>
             <Text style={styles.actionLabel}>{text(action.label)}</Text>
           </Pressable>
@@ -84,6 +84,6 @@ const styles = StyleSheet.create({
   goalCount: { fontFamily: fonts.medium, fontSize: 12, color: colors.muted, marginTop: 4 },
   actions: { flexDirection: 'row', paddingHorizontal: 12, paddingVertical: 22 },
   action: { flex: 1, alignItems: 'center', gap: 8 },
-  actionIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
+  actionIcon: { width: 68, height: 68, borderRadius: 12, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
   actionLabel: { fontFamily: fonts.medium, fontSize: 12, color: colors.ink, textAlign: 'center' },
 });
