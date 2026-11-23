@@ -1,0 +1,80 @@
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { House, Plus, Receipt, Target, User } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors } from '../theme/colors';
+import { fonts } from '../theme/type';
+import { useActions } from './ActionSheet';
+
+type DreamTabBarProps = {
+  state: { index: number; routes: { name: string; key: string }[] };
+  navigateToTab: (routeKey: string) => void;
+};
+
+const ITEMS = [
+  { name: 'index', label: 'Home', Icon: House },
+  { name: 'goals', label: 'Goals', Icon: Target },
+  { name: 'plus', label: '', Icon: Plus },
+  { name: 'transactions', label: 'Transactions', Icon: Receipt },
+  { name: 'profile', label: 'Profile', Icon: User },
+];
+
+export function DreamTabBar({ state, navigateToTab }: DreamTabBarProps) {
+  const insets = useSafeAreaInsets();
+  const { openActions } = useActions();
+  const current = state.routes[state.index]?.name;
+
+  return (
+    <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+      {ITEMS.map((item) => {
+        if (item.name === 'plus') {
+          return (
+            <Pressable key="plus" accessibilityRole="button" accessibilityLabel="Create" onPress={openActions} style={styles.plusWrap}>
+              <View style={styles.plus}>
+                <Plus color={colors.white} size={28} strokeWidth={2.4} />
+              </View>
+            </Pressable>
+          );
+        }
+        const selected = current === item.name;
+        const color = selected ? colors.forest : colors.muted;
+        return (
+          <Pressable
+            key={item.name}
+            accessibilityRole="button"
+            accessibilityLabel={item.label}
+            onPress={() => {
+              const route = state.routes.find((entry) => entry.name === item.name);
+              if (route) navigateToTab(route.key);
+            }}
+            style={styles.item}
+          >
+            <item.Icon color={color} size={22} strokeWidth={selected ? 2.4 : 2} />
+            <Text style={[styles.label, { color }]}>{item.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  bar: {
+    flexDirection: 'row',
+    backgroundColor: colors.white,
+    borderTopWidth: 1,
+    borderTopColor: colors.grey,
+    paddingTop: 8,
+  },
+  item: { flex: 1, alignItems: 'center', gap: 4 },
+  label: { fontFamily: fonts.medium, fontSize: 11 },
+  plusWrap: { flex: 1, alignItems: 'center' },
+  plus: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: colors.forest,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -28,
+  },
+});

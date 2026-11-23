@@ -1,0 +1,190 @@
+import type { Category } from './categories';
+import { isIconName } from './icons';
+import {
+  project,
+  type AuditRecord,
+  type Clock,
+  type GoalRecord,
+  type LedgerState,
+  type TxRecord,
+  type TxType,
+} from './ledger';
+
+export type Preferences = {
+  reminderEnabled: boolean;
+  reminderHour: number;
+  reminderMinute: number;
+};
+
+export type BackupFile = {
+  version: 1;
+  exportedAt: string;
+  categories: Category[];
+  goals: GoalRecord[];
+  transactions: TxRecord[];
+  audits: AuditRecord[];
+  preferences: Preferences;
+};
+
+export type RestoredBackup = {
+  categories: Category[];
+  state: LedgerState;
+  preferences: Preferences;
+};
+
+const TX_TYPES: TxType[] = ['addition', 'withdrawal', 'transfer'];
+
+export function restoreBackup(
+  raw: unknown,
+  presets: Category[],
+  clock: Clock,
+): { ok: true; data: RestoredBackup } | { ok: false; error: string } {
+  if (!isRecord(raw) || raw.version !== 1) return fail('This backup is not a Dream Fund file.');
+  if (!Array.isArray(raw.categories) || !Array.isArray(raw.goals) || !Array.isArray(raw.transactions) || !Array.isArray(raw.audits)) {
+    return fail('This backup is missing its records.');
+  }
+
+  const categoryIds = new Map<string, string>();
+  const customs: Category[] = [];
+  const usedNames = new Set(presets.map((category) => category.name.toLowerCase()));
+
+  for (const item of raw.categories) {
+    if (!isRecord(item) || typeof item.id !== 'string' || typeof item.name !== 'string') {
+      return fail('A category in the backup could not be read.');
+    }
+    const name = item.name.trim();
+    if (!name || name.length > 40) return fail('A category name in the backup is not valid.');
+    const preset = presets.find((category) => category.name.toLowerCase() === name.toLowerCase());
+    if (item.isPreset === true) {
+      if (!preset) return fail(`The backup includes an unknown preset category, ${name}.`);
+      categoryIds.set(item.id, preset.id);
+      continue;
+    }
+    if (preset || usedNames.has(name.toLowerCase())) return fail(`${name} conflicts with a category that already exists.`);
+    usedNames.add(name.toLowerCase());
+    const id = clock.id();
+    categoryIds.set(item.id, id);
+    customs.push({
+      id,
+      name,
+      icon: typeof item.icon === 'string' && isIconName(item.icon) ? item.icon : 'Circle',
+      isPreset: false,
+      sortOrder: typeof item.sortOrder === 'number' ? item.sortOrder : customs.length + presets.length,
+    });
+  }
+
+  const goalIds = new Map<string, string>();
+  const goals: GoalRecord[] = [];
+  for (const item of raw.goals) {
+    if (!isRecord(item) || typeof item.id !== 'string' || typeof item.name !== 'string' || typeof item.categoryId !== 'string') {
+      return fail('A goal in the backup could not be read.');
+    }
+    const categoryId = categoryIds.get(item.categoryId);
+    if (!categoryId) return fail(`The backup is missing a category for ${item.name}.`);
+    if (!Number.isInteger(item.targetPaise) || Number(item.targetPaise) <= 0) return fail(`The target for ${item.name} is not valid.`);
+    const id = clock.id();
+    goalIds.set(item.id, id);
+    goals.push({
+      id,
+      name: item.name.trim() || 'Goal',
+      categoryId,
+      targetPaise: Number(item.targetPaise),
+      targetDate: typeof item.targetDate === 'string' ? item.targetDate : null,
+      imageUri: typeof item.imageUri === 'string' ? item.imageUri.slice(0, 5000) : null,
+      deletedAt: typeof item.deletedAt === 'string' ? item.deletedAt : null,
+      categorySnapshot: typeof item.categorySnapshot === 'string' ? item.categorySnapshot : null,
+      categoryIconSnapshot: typeof item.categoryIconSnapshot === 'string' ? item.categoryIconSnapshot : null,
+    });
+  }
+
+  const transactionIds = new Map<string, string>();
+  const transactions: TxRecord[] = [];
+  for (const item of raw.transactions) {
+    if (!isRecord(item) || typeof item.id !== 'string' || typeof item.goalId !== 'string') {
+      return fail('A transaction in the backup could not be read.');
+    }
+    if (!TX_TYPES.includes(item.type as TxType)) return fail('A transaction type in the backup is not valid.');
+    if (!Number.isInteger(item.amountPaise) || Number(item.amountPaise) <= 0) return fail('A transaction amount in the backup is not valid.');
+    const goalId = goalIds.get(item.goalId);
+    if (!goalId) return fail('The backup is missing a goal used by a transaction.');
+    const counterGoalId = typeof item.counterGoalId === 'string' ? goalIds.get(item.counterGoalId) ?? null : null;
+    if (item.type === 'transfer' && !counterGoalId) return fail('A transfer in the backup is missing its destination.');
+    const id = clock.id();
+    transactionIds.set(item.id, id);
+    transactions.push({
+      id,
+      type: item.type as TxType,
+      amountPaise: Number(item.amountPaise),
+      date: typeof item.date === 'string' ? item.date : '',
+      note: typeof item.note === 'string' ? item.note : '',
+      goalId,
+      counterGoalId: item.type === 'transfer' ? counterGoalId : null,
+      lockedReason: item.lockedReason === 'goal_deleted' ? 'goal_deleted' : null,
+      createdAt: typeof item.createdAt === 'string' ? item.createdAt : clock.now,
+    });
+  }
+
+  const audits: AuditRecord[] = [];
+  for (const item of raw.audits) {
+    if (!isRecord(item) || typeof item.transactionId !== 'string' || !isRecord(item.previous) || !isRecord(item.updated)) {
+      return fail('An audit entry in the backup could not be read.');
+    }
+    const transactionId = transactionIds.get(item.transactionId);
+    if (!transactionId) return fail('An audit entry points at a missing transaction.');
+    const previous = snapshot(item.previous, goalIds);
+    const updated = snapshot(item.updated, goalIds);
+    if (!previous || !updated) return fail('An audit entry is missing its amounts.');
+    audits.push({
+      id: clock.id(),
+      transactionId,
+      previous,
+      updated,
+      editedAt: typeof item.editedAt === 'string' ? item.editedAt : clock.now,
+    });
+  }
+
+  const state: LedgerState = { goals, transactions, audits };
+  const projected = project(state);
+  if (!projected.ok) return projected;
+
+  return {
+    ok: true,
+    data: {
+      categories: customs,
+      state,
+      preferences: readPreferences(raw.preferences),
+    },
+  };
+}
+
+function readPreferences(value: unknown): Preferences {
+  if (!isRecord(value)) return { reminderEnabled: false, reminderHour: 20, reminderMinute: 0 };
+  const hour = Number(value.reminderHour);
+  const minute = Number(value.reminderMinute);
+  return {
+    reminderEnabled: value.reminderEnabled === true,
+    reminderHour: Number.isInteger(hour) && hour >= 0 && hour <= 23 ? hour : 20,
+    reminderMinute: Number.isInteger(minute) && minute >= 0 && minute <= 59 ? minute : 0,
+  };
+}
+
+function snapshot(value: Record<string, unknown>, goalIds: Map<string, string>) {
+  const goalId = typeof value.goalId === 'string' ? goalIds.get(value.goalId) : undefined;
+  if (!goalId || !Number.isInteger(value.amountPaise)) return null;
+  const counter = typeof value.counterGoalId === 'string' ? goalIds.get(value.counterGoalId) ?? null : null;
+  return {
+    amountPaise: Number(value.amountPaise),
+    date: typeof value.date === 'string' ? value.date : '',
+    note: typeof value.note === 'string' ? value.note : '',
+    goalId,
+    counterGoalId: counter,
+  };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function fail(error: string) {
+  return { ok: false as const, error };
+}

@@ -1,0 +1,90 @@
+import {
+  Baby,
+  Bike,
+  BookOpen,
+  Briefcase,
+  Camera,
+  Car,
+  Circle,
+  Dumbbell,
+  Ellipsis,
+  Flag,
+  Gift,
+  GraduationCap,
+  Heart,
+  Home,
+  House,
+  Landmark,
+  Laptop,
+  Monitor,
+  Music,
+  Palette,
+  PawPrint,
+  Plane,
+  Shirt,
+  ShoppingBag,
+  Smartphone,
+  Sparkles,
+  TreePalm,
+  TreePine,
+  Trophy,
+  Umbrella,
+  User,
+  Utensils,
+  Wallet,
+  WashingMachine,
+  type LucideIcon,
+} from 'lucide-react-native';
+import { type IconName } from '../domain/icons';
+
+const ICONS: Record<IconName, LucideIcon> = {
+  House,
+  Plane,
+  User,
+  ShoppingBag,
+  GraduationCap,
+  Monitor,
+  Ellipsis,
+  Car,
+  Landmark,
+  TreePalm,
+  WashingMachine,
+  Heart,
+  Gift,
+  BookOpen,
+  Camera,
+  Music,
+  Dumbbell,
+  Utensils,
+  Briefcase,
+  Bike,
+  TreePine,
+  Laptop,
+  Smartphone,
+  Trophy,
+  Shirt,
+  Umbrella,
+  Palette,
+  Baby,
+  PawPrint,
+  Sparkles,
+  Home,
+  Flag,
+  Wallet,
+  Circle,
+};
+
+export function AppIcon({
+  name,
+  size = 22,
+  color,
+  strokeWidth = 2,
+}: {
+  name: string;
+  size?: number;
+  color: string;
+  strokeWidth?: number;
+}) {
+  const Icon = ICONS[name as IconName] ?? Circle;
+  return <Icon size={size} color={color} strokeWidth={strokeWidth} />;
+}
