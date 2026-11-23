@@ -8,6 +8,7 @@
     "@expo-google-fonts/lora": "^0.4.2",
     "@expo/log-box": "^58.0.15",
     "@expo/metro-runtime": "~58.0.17",
+    "@formatjs/intl-pluralrules": "^7.1.1",
     "@react-native-community/datetimepicker": "9.2.1",
     "expo": "~58.0.26",
     "expo-auth-session": "~58.0.19",

@@ -1,3 +1,5 @@
+import '@formatjs/intl-pluralrules/polyfill.js';
+import '@formatjs/intl-pluralrules/locale-data/en.js';
 import { createIntl, createIntlCache } from 'react-intl';
 import en from './en.json' with { type: 'json' };
 

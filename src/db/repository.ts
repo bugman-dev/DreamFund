@@ -1,4 +1,4 @@
-import { randomUUID } from 'expo-crypto';
+import { createId } from '../domain/id';
 import type { BackupFile } from '../domain/backup';
 import { restoreBackup } from '../domain/backup';
 import type { Category } from '../domain/categories';
@@ -129,7 +129,7 @@ export async function createCategory(userId: string, name: string, icon: string)
       throw new Error(t('error.categoryExists'));
     }
     const category: Category = {
-      id: randomUUID(),
+      id: createId(),
       name: trimmed,
       icon,
       isPreset: false,
@@ -184,7 +184,7 @@ export async function createGoal(
 ): Promise<string> {
   const invalid = validateGoalDraft(input);
   if (invalid) throw new Error(invalid);
-  const id = randomUUID();
+  const id = createId();
   await enqueue(async () => {
     const categories = await readCategories(userId);
     if (!categories.some((category) => category.id === input.categoryId)) throw new Error(t('common.chooseCategory'));

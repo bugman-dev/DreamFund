@@ -1,49 +1,23 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Redirect } from 'expo-router';
-import * as Google from 'expo-auth-session/providers/google';
 import { Leaf } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { googleAndroidClientId, googleConfigured, googleIosClientId, googleWebClientId, previewUser, profileFromIdToken } from '../src/auth/google';
+import { googleConfigured, previewUser } from '../src/auth/google';
 import { useSession } from '../src/auth/session';
-import { Button } from '../src/components/ui';
-import { PREVIEW_GOOGLE_CLIENT_ID } from '../src/constants';
 import { useText } from '../src/locale';
 import { colors } from '../src/theme/colors';
 import { fonts } from '../src/theme/type';
+
+const GoogleControls = lazy(() =>
+  import('../src/auth/GoogleControls').catch(() => ({ default: function GoogleUnavailable(_props: { onError: (message: string | null) => void }) { return <View />; } })),
+);
 
 export default function WelcomeScreen() {
   const text = useText();
   const insets = useSafeAreaInsets();
   const { user, signIn } = useSession();
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const webClientId = googleConfigured ? googleWebClientId : PREVIEW_GOOGLE_CLIENT_ID;
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    webClientId,
-    iosClientId: googleConfigured ? googleIosClientId : webClientId,
-    androidClientId: googleConfigured ? googleAndroidClientId : webClientId,
-  });
-
-  useEffect(() => {
-    if (response?.type !== 'success') {
-      if (response?.type === 'error') setError(text('welcome.googleFailed'));
-      return;
-    }
-    const idToken = response.params.id_token ?? response.authentication?.idToken;
-    if (!idToken) {
-      setError(text('welcome.googleNoAccount'));
-      return;
-    }
-    setBusy(true);
-    try {
-      const profile = profileFromIdToken(idToken);
-      void signIn(profile).finally(() => setBusy(false));
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : text('welcome.googleFailed'));
-      setBusy(false);
-    }
-  }, [response, signIn, text]);
 
   if (user) return <Redirect href="/(tabs)" />;
 
@@ -58,14 +32,9 @@ export default function WelcomeScreen() {
         <Text style={styles.quote}>{text('welcome.quote')}</Text>
       </View>
       <View style={styles.footer}>
-        <Button
-          label={busy ? text('welcome.googleBusy') : text('welcome.google')}
-          onPress={() => {
-            setError(null);
-            void promptAsync();
-          }}
-          disabled={!googleConfigured || !request || busy}
-        />
+        <Suspense fallback={null}>
+          <GoogleControls onError={setError} />
+        </Suspense>
         {!googleConfigured ? (
           <Pressable accessibilityRole="button" onPress={() => void signIn(previewUser)} style={styles.preview}>
             <Text style={styles.previewText}>{text('welcome.guest')}</Text>

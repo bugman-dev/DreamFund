@@ -1,3 +1,5 @@
+import '@formatjs/intl-pluralrules/polyfill.js';
+import '@formatjs/intl-pluralrules/locale-data/en.js';
 import { useCallback, type ReactNode } from 'react';
 import { IntlProvider, useIntl } from 'react-intl';
 import en from './en.json';

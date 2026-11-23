@@ -989,6 +989,11 @@
     chalk "^4.1.0"
     js-yaml "^4.1.0"
 
+"@formatjs/bigdecimal@0.2.11":
+  version "0.2.11"
+  resolved "https://registry.yarnpkg.com/@formatjs/bigdecimal/-/bigdecimal-0.2.11.tgz#fadffd86ed658d0c0a19f81f87df1ff4144eb33c"
+  integrity sha512-HPfzK4SCEU4K++s2GI8h3FaSqdR+F2UbFZ6X9655ZwQj6Enca41ddYyZwDu2nkDeLiBKY5pdXYHjcoAs00/vUQ==
+
 "@formatjs/fast-memoize@3.1.8":
   version "3.1.8"
   resolved "https://registry.yarnpkg.com/@formatjs/fast-memoize/-/fast-memoize-3.1.8.tgz#1442251fe4107ba127904c22a815fae33a961c98"
@@ -1005,6 +1010,21 @@
   version "2.1.13"
   resolved "https://registry.yarnpkg.com/@formatjs/icu-skeleton-parser/-/icu-skeleton-parser-2.1.13.tgz#b51ec5c826b93c34d4e45390a4d32d05c222cf07"
   integrity sha512-IdAJ9NrHn7AF0zqncD9UpxQozTYyJtbwwrZnJMEKVxTcOOXtVkUb2XYTpNOGTAv58NCsk0rjRB9G+i2SvBmGAQ==
+
+"@formatjs/intl-localematcher@0.10.2":
+  version "0.10.2"
+  resolved "https://registry.yarnpkg.com/@formatjs/intl-localematcher/-/intl-localematcher-0.10.2.tgz#cd454b05b450ecce6229ebd32090c9a7a169975a"
+  integrity sha512-KvXcVOPLYRQ5s6O0MrHePLIIhkSUm5bZbsEHGmKI3xXoy7hvGxUoagaobAIi8/hc9YabgHvLDFeeqbrjPNIKwg==
+  dependencies:
+    "@formatjs/fast-memoize" "3.1.8"
+
+"@formatjs/intl-pluralrules@^7.1.1":
+  version "7.1.1"
+  resolved "https://registry.yarnpkg.com/@formatjs/intl-pluralrules/-/intl-pluralrules-7.1.1.tgz#8007d589965e48a1df90e1597630c7133f96def9"
+  integrity sha512-w4UWRJsAGB6ke79R3JWkAS5v57zzsNtp/hLDPsLYNR2Y5z1qJ7QySje405LzUSr5Ziomqd7V8qj0IgJ02UqYPA==
+  dependencies:
+    "@formatjs/bigdecimal" "0.2.11"
+    "@formatjs/intl-localematcher" "0.10.2"
 
 "@formatjs/intl@6.2.1":
   version "6.2.1"
