@@ -3,7 +3,8 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { GOAL_DELETED_REASON } from '../../src/constants';
 import { todayIso } from '../../src/domain/dates';
-import { NOTE_LIMIT, formatInr, paiseToInput, parseRupees } from '../../src/domain/ledger';
+import { useAmount } from '../../src/currency/Currency';
+import { NOTE_LIMIT, paiseToInput, parseRupees } from '../../src/domain/ledger';
 import { ConfirmModal } from '../../src/components/ConfirmModal';
 import { DateField } from '../../src/components/DateField';
 import { Button, ErrorText, Field, Screen, ScreenHeader } from '../../src/components/ui';
@@ -36,6 +37,7 @@ export default function EditTransactionScreen() {
 function Editor({ tx }: { tx: NonNullable<ReturnType<typeof useBooks>['transactions'][number]> }) {
   const colors = useColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const money = useAmount();
   const text = useText();
   const router = useRouter();
   const books = useBooks();
@@ -120,7 +122,7 @@ function Editor({ tx }: { tx: NonNullable<ReturnType<typeof useBooks>['transacti
       <ConfirmModal
         visible={confirming}
         title={text('tx.confirmTitle')}
-        message={text('tx.confirmMessage', { amount: formatInr(tx.amountPaise) })}
+        message={text('tx.confirmMessage', { amount: money(tx.amountPaise) })}
         confirmLabel={text('common.save')}
         busy={saving}
         onCancel={() => setConfirming(false)}

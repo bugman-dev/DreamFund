@@ -4,7 +4,8 @@ import { useRouter } from 'expo-router';
 import Svg, { Circle } from 'react-native-svg';
 import { PERCENT_MAX } from '../src/constants';
 import { periodStart, todayIso, type Period } from '../src/domain/dates';
-import { formatInr, netSaved } from '../src/domain/ledger';
+import { useAmount } from '../src/currency/Currency';
+import { netSaved } from '../src/domain/ledger';
 import { accentFor } from '../src/theme/colors';
 import { EmptyState, FilterChip, LoadingScreen, Screen, ScreenHeader } from '../src/components/ui';
 import { useBooks } from '../src/data/useBooks';
@@ -22,6 +23,7 @@ const PERIODS: { id: Period; label: MessageId }[] = [
 export default function InsightsScreen() {
   const colors = useColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const amount = useAmount();
   const text = useText();
   const router = useRouter();
   const books = useBooks();
@@ -54,7 +56,7 @@ export default function InsightsScreen() {
           <View style={styles.stats}>
             <View style={styles.stat}>
               <Text style={styles.statLabel}>{text('insights.saved')}</Text>
-              <Text style={[styles.statValue, saved < 0 && styles.negative]}>{formatInr(saved)}</Text>
+              <Text style={[styles.statValue, saved < 0 && styles.negative]}>{amount(saved)}</Text>
             </View>
             <View style={styles.stat}>
               <Text style={styles.statLabel}>{text('insights.goals')}</Text>
@@ -83,6 +85,7 @@ export default function InsightsScreen() {
 }
 
 function Donut({ slices, total, caption }: { slices: { value: number; color: string }[]; total: number; caption: string }) {
+  const amount = useAmount();
   const colors = useColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const radius = 54;
@@ -115,7 +118,7 @@ function Donut({ slices, total, caption }: { slices: { value: number; color: str
           : null}
       </Svg>
       <View style={styles.donutLabel}>
-        <Text style={styles.donutAmount}>{formatInr(total)}</Text>
+        <Text style={styles.donutAmount}>{amount(total)}</Text>
         <Text style={styles.donutCaption}>{caption}</Text>
       </View>
     </View>

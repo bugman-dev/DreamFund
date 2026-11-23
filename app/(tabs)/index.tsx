@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Bell, Minus, PieChart, Plus, Target } from 'lucide-react-native';
 import { firstName, greeting } from '../../src/domain/dates';
-import { formatInr } from '../../src/domain/ledger';
+import { useAmount } from '../../src/currency/Currency';
 import { useSession } from '../../src/auth/session';
 import { GoalCard } from '../../src/components/GoalCard';
 import { EmptyState, ProgressBar, Screen, SectionLabel } from '../../src/components/ui';
@@ -23,6 +23,7 @@ const ACTIONS: { label: MessageId; href: '/money/add' | '/money/withdraw' | '/go
 export default function HomeScreen() {
   const colors = useColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const amount = useAmount();
   const text = useText();
   const router = useRouter();
   const { user } = useSession();
@@ -40,9 +41,9 @@ export default function HomeScreen() {
       </View>
       <View style={styles.summary}>
         <Text style={styles.summaryLabel}>{text('home.totalSaved')}</Text>
-        <Text style={styles.summaryAmount}>{formatInr(books.saved)}</Text>
+        <Text style={styles.summaryAmount}>{amount(books.saved)}</Text>
         <View style={styles.summaryMeta}>
-          <Text style={styles.summaryOf}>{text('home.ofAmount', { amount: formatInr(books.target) })}</Text>
+          <Text style={styles.summaryOf}>{text('home.ofAmount', { amount: amount(books.target) })}</Text>
           <Text style={styles.summaryPercent}>{books.progress}%</Text>
         </View>
         <ProgressBar progress={books.progress} />

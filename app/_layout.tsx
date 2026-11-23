@@ -11,6 +11,7 @@ import { ActionsProvider } from '../src/components/ActionSheet';
 import { LoadingScreen, NoticeBanner } from '../src/components/ui';
 import { DataProvider, useData } from '../src/data/store';
 import { WEB_MAX_WIDTH } from '../src/constants';
+import { CurrencyProvider, useCurrency } from '../src/currency/Currency';
 import { LocaleProvider } from '../src/locale';
 import { ThemeProvider, useTheme } from '../src/theme/Theme';
 
@@ -26,9 +27,11 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ThemeProvider>
-          <LocaleProvider>
-            <ThemedShell fontsReady={loaded || Boolean(error)} />
-          </LocaleProvider>
+          <CurrencyProvider>
+            <LocaleProvider>
+              <ThemedShell fontsReady={loaded || Boolean(error)} />
+            </LocaleProvider>
+          </CurrencyProvider>
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
@@ -37,7 +40,8 @@ export default function RootLayout() {
 
 function ThemedShell({ fontsReady }: { fontsReady: boolean }) {
   const { colors, ready } = useTheme();
-  if (!fontsReady || !ready) return <LoadingScreen />;
+  const { ready: currencyReady } = useCurrency();
+  if (!fontsReady || !ready || !currencyReady) return <LoadingScreen />;
   const frame = Platform.OS === 'web'
     ? { flex: 1, width: '100%' as const, maxWidth: WEB_MAX_WIDTH, alignSelf: 'center' as const, backgroundColor: colors.ivory }
     : { flex: 1, backgroundColor: colors.ivory };

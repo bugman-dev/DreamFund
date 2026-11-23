@@ -1,5 +1,6 @@
 export const SESSION_KEY = 'dreamfund.session';
 export const THEME_KEY = 'dreamfund.theme';
+export const CURRENCY_KEY = 'dreamfund.currency';
 export const DATABASE_NAME = 'dreamfund.db';
 export const BACKUP_FILE_PREFIX = 'dreamfund-backup-';
 export const BACKUP_VERSION = 1 as const;

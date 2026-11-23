@@ -1,4 +1,5 @@
-import { GOAL_DELETED_NOTE, GOAL_DELETED_REASON, INR_SYMBOL, NAME_LIMIT, NOTE_LIMIT, PAISE_PER_RUPEE } from '../constants';
+import { GOAL_DELETED_NOTE, GOAL_DELETED_REASON, NAME_LIMIT, NOTE_LIMIT, PAISE_PER_RUPEE } from '../constants';
+import { formatAmount as formatMoney } from './money';
 import { t } from '../locale/messages';
 
 export { GOAL_DELETED_NOTE, NAME_LIMIT, NOTE_LIMIT };
@@ -68,19 +69,7 @@ export function emptyLedger(): LedgerState {
 }
 
 export function formatInr(paise: number): string {
-  const negative = paise < 0;
-  const absolute = Math.abs(paise);
-  const rupees = Math.trunc(absolute / PAISE_PER_RUPEE);
-  const fraction = absolute % PAISE_PER_RUPEE;
-  const body = fraction === 0 ? groupIndian(String(rupees)) : `${groupIndian(String(rupees))}.${String(fraction).padStart(2, '0')}`;
-  return `${negative ? '-' : ''}${INR_SYMBOL}${body}`;
-}
-
-function groupIndian(whole: string): string {
-  if (whole.length <= 3) return whole;
-  const head = whole.slice(0, -3);
-  const tail = whole.slice(-3);
-  return `${head.replace(/\B(?=(\d{2})+(?!\d))/g, ',')},${tail}`;
+  return formatMoney(paise, 'inr');
 }
 
 export function parseRupees(input: string): number | null {
@@ -120,7 +109,7 @@ export function project(state: LedgerState): { ok: true; allocated: Map<string, 
         return fail(
           room <= 0
             ? t('ledger.addFull', { name: goal.name })
-            : t('ledger.addRoom', { amount: formatInr(room), name: goal.name }),
+            : t('ledger.addRoom', { amount: formatMoney(room), name: goal.name }),
         );
       }
       allocated.set(tx.goalId, next);
@@ -130,7 +119,7 @@ export function project(state: LedgerState): { ok: true; allocated: Map<string, 
     if (tx.type === 'withdrawal') {
       const available = allocated.get(tx.goalId) ?? 0;
       const next = available - tx.amountPaise;
-      if (next < 0) return fail(t('ledger.available', { amount: formatInr(available), name: goal.name }));
+      if (next < 0) return fail(t('ledger.available', { amount: formatMoney(available), name: goal.name }));
       allocated.set(tx.goalId, next);
       continue;
     }
@@ -139,14 +128,14 @@ export function project(state: LedgerState): { ok: true; allocated: Map<string, 
     const destination = goals.get(tx.counterGoalId);
     if (!destination) return fail(t('ledger.goalMissing'));
     const available = allocated.get(tx.goalId) ?? 0;
-    if (available < tx.amountPaise) return fail(t('ledger.available', { amount: formatInr(available), name: goal.name }));
+    if (available < tx.amountPaise) return fail(t('ledger.available', { amount: formatMoney(available), name: goal.name }));
     const destNext = (allocated.get(tx.counterGoalId) ?? 0) + tx.amountPaise;
     if (destNext > destination.targetPaise) {
       const room = destination.targetPaise - (allocated.get(tx.counterGoalId) ?? 0);
       return fail(
         room <= 0
           ? t('ledger.transferFull', { name: destination.name })
-          : t('ledger.transferRoom', { amount: formatInr(room), name: destination.name }),
+          : t('ledger.transferRoom', { amount: formatMoney(room), name: destination.name }),
       );
     }
     allocated.set(tx.goalId, available - tx.amountPaise);
@@ -210,7 +199,7 @@ export function validateGoalDraft(input: {
   if (!Number.isInteger(input.targetPaise) || input.targetPaise <= 0) return t('goal.targetRequired');
   const allocated = input.allocatedPaise ?? 0;
   if (input.targetPaise < allocated) {
-    return t('ledger.targetMinimum', { amount: formatInr(allocated) });
+    return t('ledger.targetMinimum', { amount: formatMoney(allocated) });
   }
   if (input.targetDate && !isRealDate(input.targetDate)) return t('ledger.targetDate');
   return null;

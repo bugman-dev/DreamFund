@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { formatInr } from '../domain/ledger';
+import { useAmount } from '../currency/Currency';
 import type { PresentedGoal } from '../data/present';
 import { useText } from '../locale';
 import type { Palette } from '../theme/palettes';
@@ -12,6 +12,7 @@ import { CategoryChip, ProgressBar } from './ui';
 export function GoalCard({ goal, note, onPress }: { goal: PresentedGoal; note?: string; onPress: () => void }) {
   const colors = useColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const amount = useAmount();
   const text = useText();
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={goal.name} onPress={onPress} style={styles.card}>
@@ -22,8 +23,8 @@ export function GoalCard({ goal, note, onPress }: { goal: PresentedGoal; note?: 
           <CategoryChip name={goal.categoryName} icon={goal.categoryIcon} accent={goal.accent} />
         </View>
         <View style={styles.amounts}>
-          <Text style={styles.saved}>{formatInr(goal.allocatedPaise)}</Text>
-          <Text style={styles.target}>{text('home.ofAmount', { amount: formatInr(goal.targetPaise) })}</Text>
+          <Text style={styles.saved}>{amount(goal.allocatedPaise)}</Text>
+          <Text style={styles.target}>{text('home.ofAmount', { amount: amount(goal.targetPaise) })}</Text>
           <Text style={styles.percent}>{goal.progress}%</Text>
         </View>
         <ProgressBar progress={goal.progress} />

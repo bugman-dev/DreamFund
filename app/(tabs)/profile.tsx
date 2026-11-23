@@ -6,6 +6,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Check, ChevronRight, X } from 'lucide-react-native';
 import { formatClock } from '../../src/domain/dates';
 import { useSession } from '../../src/auth/session';
+import { useCurrency } from '../../src/currency/Currency';
+import { CURRENCY_IDS, type CurrencyId } from '../../src/domain/money';
 import { ConfirmModal } from '../../src/components/ConfirmModal';
 import { Button, Card, ErrorText, Screen, Title } from '../../src/components/ui';
 import { useData } from '../../src/data/store';
@@ -20,10 +22,29 @@ const THEME_LABEL: Record<PaletteId, MessageId> = {
   dusk: 'theme.dusk',
 };
 
+const CURRENCY_LABEL: Record<CurrencyId, MessageId> = {
+  inr: 'currency.inr',
+  usd: 'currency.usd',
+  aed: 'currency.aed',
+};
+
+const CURRENCY_MARK: Record<CurrencyId, string> = {
+  inr: '₹',
+  usd: '$',
+  aed: 'د.إ',
+};
+
+const CURRENCY_VALUE: Record<CurrencyId, string> = {
+  inr: 'INR ₹',
+  usd: 'USD $',
+  aed: 'AED',
+};
+
 export default function ProfileScreen() {
   const colors = useColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { id: themeId, setTheme } = useTheme();
+  const { id: currencyId, setCurrency } = useCurrency();
   const text = useText();
   const router = useRouter();
   const { user, signOut } = useSession();
@@ -33,6 +54,8 @@ export default function ProfileScreen() {
   const [pickingTime, setPickingTime] = useState(false);
   const [themesOpen, setThemesOpen] = useState(false);
   const [draftTheme, setDraftTheme] = useState<PaletteId>(themeId);
+  const [currencyOpen, setCurrencyOpen] = useState(false);
+  const [draftCurrency, setDraftCurrency] = useState<CurrencyId>(currencyId);
   const initial = user?.name?.trim().charAt(0).toUpperCase() || 'D';
 
   async function toggleReminder(enabled: boolean) {
@@ -66,7 +89,14 @@ export default function ProfileScreen() {
         </View>
       </Card>
       <Text style={styles.group}>{text('profile.preferences')}</Text>
-      <Row label={text('profile.currency')} value={text('profile.currencyValue')} />
+      <Row
+        label={text('profile.currency')}
+        value={CURRENCY_VALUE[currencyId]}
+        onPress={() => {
+          setDraftCurrency(currencyId);
+          setCurrencyOpen(true);
+        }}
+      />
       <Row
         label={text('profile.appThemes')}
         value={text(THEME_LABEL[themeId])}
@@ -126,6 +156,38 @@ export default function ProfileScreen() {
           void signOut().then(() => router.replace('/welcome'));
         }}
       />
+      <Modal visible={currencyOpen} transparent animationType="fade" onRequestClose={() => setCurrencyOpen(false)}>
+        <Pressable style={styles.backdrop} onPress={() => setCurrencyOpen(false)}>
+          <Pressable style={styles.sheet} onPress={() => undefined}>
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>{text('profile.currency')}</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel={text('common.close')} onPress={() => setCurrencyOpen(false)} style={styles.close}>
+                <X color={colors.ink} size={22} />
+              </Pressable>
+            </View>
+            <View style={styles.currencyList}>
+              {CURRENCY_IDS.map((id) => {
+                const selected = draftCurrency === id;
+                return (
+                  <Pressable key={id} accessibilityRole="button" accessibilityState={{ selected }} onPress={() => setDraftCurrency(id)} style={[styles.currencyRow, selected && styles.currencyRowSelected]}>
+                    <Text style={styles.currencyName}>{text(CURRENCY_LABEL[id])}</Text>
+                    <Text style={styles.currencyMark}>{CURRENCY_MARK[id]}</Text>
+                    {selected ? <Check color={colors.forest} size={18} strokeWidth={2.6} /> : <View style={styles.currencyCheckSpace} />}
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Text style={styles.currencyNote}>{text('profile.currencyNote')}</Text>
+            <Button
+              label={text('profile.applyCurrency')}
+              onPress={() => {
+                setCurrency(draftCurrency);
+                setCurrencyOpen(false);
+              }}
+            />
+          </Pressable>
+        </Pressable>
+      </Modal>
       <Modal visible={themesOpen} transparent animationType="fade" onRequestClose={() => setThemesOpen(false)}>
         <Pressable style={styles.backdrop} onPress={() => setThemesOpen(false)}>
           <Pressable style={styles.sheet} onPress={() => undefined}>
@@ -230,5 +292,12 @@ function createStyles(colors: Palette) {
   swatch: { width: '100%', aspectRatio: 1, maxWidth: 88, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   swatchSelected: { borderWidth: 3, borderColor: colors.ink },
   themeName: { fontFamily: fonts.medium, fontSize: 13, color: colors.ink, textAlign: 'center' },
+  currencyList: { gap: 8 },
+  currencyRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.white, borderRadius: 12, borderWidth: 2, borderColor: colors.white, paddingHorizontal: 16, paddingVertical: 14 },
+  currencyRowSelected: { borderColor: colors.forest },
+  currencyName: { flex: 1, fontFamily: fonts.medium, fontSize: 16, color: colors.ink },
+  currencyMark: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ink },
+  currencyCheckSpace: { width: 18 },
+  currencyNote: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18, color: colors.muted },
   });
 }

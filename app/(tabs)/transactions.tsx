@@ -3,7 +3,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeftRight, Minus, Plus } from 'lucide-react-native';
 import { formatDay, formatMonth } from '../../src/domain/dates';
-import { compareTransactions, formatInr } from '../../src/domain/ledger';
+import { useAmount } from '../../src/currency/Currency';
+import { compareTransactions } from '../../src/domain/ledger';
 import { transactionTitle } from '../../src/data/present';
 import { EmptyState, FilterChip, Screen, Title } from '../../src/components/ui';
 import { useBooks } from '../../src/data/useBooks';
@@ -29,6 +30,7 @@ function transactionFilter(value: string | string[] | undefined): TransactionFil
 export default function TransactionsScreen() {
   const colors = useColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const amount = useAmount();
   const text = useText();
   const router = useRouter();
   const params = useLocalSearchParams<{ goalId?: string; type?: string }>();
@@ -82,7 +84,7 @@ export default function TransactionsScreen() {
                     {tx.note.trim() ? <Text style={styles.note} numberOfLines={2}>{tx.note.trim()}</Text> : null}
                   </View>
                   <Text style={[styles.amount, positive && styles.amountPositive, negative && styles.amountNegative]}>
-                    {negative ? '-' : positive ? '+' : ''}{formatInr(tx.amountPaise)}
+                    {negative ? '-' : positive ? '+' : ''}{amount(tx.amountPaise)}
                   </Text>
                 </Pressable>
               );

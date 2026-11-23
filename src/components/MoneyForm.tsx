@@ -4,7 +4,8 @@ import { useRouter } from 'expo-router';
 import { ChevronDown } from 'lucide-react-native';
 import { MONEY_SHORTCUTS, PAISE_PER_RUPEE } from '../constants';
 import { todayIso } from '../domain/dates';
-import { formatInr, NOTE_LIMIT, parseRupees } from '../domain/ledger';
+import { useAmount } from '../currency/Currency';
+import { NOTE_LIMIT, parseRupees } from '../domain/ledger';
 import type { PresentedGoal } from '../data/present';
 import { useText } from '../locale';
 import type { Palette } from '../theme/palettes';
@@ -30,6 +31,7 @@ export function MoneyForm({
 }) {
   const colors = useColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const money = useAmount();
   const text = useText();
   const router = useRouter();
   const data = useData();
@@ -72,10 +74,10 @@ export function MoneyForm({
   const message = useMemo(() => {
     const paise = parseRupees(amount);
     if (!paise || !goal) return '';
-    if (mode === 'add') return text('money.confirmAdd', { amount: formatInr(paise), name: goal.name });
-    if (mode === 'withdraw') return text('money.confirmWithdraw', { amount: formatInr(paise), name: goal.name });
-    return text('money.confirmTransfer', { amount: formatInr(paise), name: goal.name, counter: counter?.name ?? text('money.anotherGoal') });
-  }, [amount, counter?.name, goal, mode, text]);
+    if (mode === 'add') return text('money.confirmAdd', { amount: money(paise), name: goal.name });
+    if (mode === 'withdraw') return text('money.confirmWithdraw', { amount: money(paise), name: goal.name });
+    return text('money.confirmTransfer', { amount: money(paise), name: goal.name, counter: counter?.name ?? text('money.anotherGoal') });
+  }, [amount, counter?.name, goal, mode, money, text]);
 
   if (!data.ready) {
     return (
@@ -137,11 +139,11 @@ export function MoneyForm({
       <ScreenHeader title={title} onBack={() => router.back()} />
       <View style={styles.body}>
         {mode === 'transfer' ? <Text style={styles.kicker}>{text('money.from')}</Text> : null}
-        <GoalRow goal={goal} onPress={() => setPicking('from')} detail={mode === 'withdraw' ? text('money.available', { amount: formatInr(goal?.allocatedPaise ?? 0) }) : text('money.savedOf', { saved: formatInr(goal?.allocatedPaise ?? 0), target: formatInr(goal?.targetPaise ?? 0) })} />
+        <GoalRow goal={goal} onPress={() => setPicking('from')} detail={mode === 'withdraw' ? text('money.available', { amount: money(goal?.allocatedPaise ?? 0) }) : text('money.savedOf', { saved: money(goal?.allocatedPaise ?? 0), target: money(goal?.targetPaise ?? 0) })} />
         {mode === 'transfer' ? (
           <>
             <Text style={styles.kicker}>{text('money.to')}</Text>
-            <GoalRow goal={counter} onPress={() => setPicking('to')} detail={counter ? text('money.roomLeft', { amount: formatInr(counter.remainingPaise) }) : text('common.chooseGoal')} />
+            <GoalRow goal={counter} onPress={() => setPicking('to')} detail={counter ? text('money.roomLeft', { amount: money(counter.remainingPaise) }) : text('common.chooseGoal')} />
           </>
         ) : null}
         <Field label={text('money.amount')}>
@@ -157,7 +159,7 @@ export function MoneyForm({
         <View style={styles.shortcuts}>
           {MONEY_SHORTCUTS.map((rupees) => (
             <Pressable key={rupees} accessibilityRole="button" onPress={() => addShortcut(rupees)} style={styles.shortcut}>
-              <Text style={styles.shortcutText}>+{formatInr(rupees * PAISE_PER_RUPEE)}</Text>
+              <Text style={styles.shortcutText}>+{money(rupees * PAISE_PER_RUPEE)}</Text>
             </Pressable>
           ))}
         </View>

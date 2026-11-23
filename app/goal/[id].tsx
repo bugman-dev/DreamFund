@@ -6,7 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import { PERCENT_MAX } from '../../src/constants';
 import { daysUntil, formatDay, todayIso } from '../../src/domain/dates';
-import { compareTransactions, formatInr } from '../../src/domain/ledger';
+import { useAmount } from '../../src/currency/Currency';
+import { compareTransactions } from '../../src/domain/ledger';
 import { transactionTitle } from '../../src/data/present';
 import { ConfirmModal } from '../../src/components/ConfirmModal';
 import { GoalImage } from '../../src/components/GoalImage';
@@ -20,6 +21,7 @@ import { fonts } from '../../src/theme/type';
 export default function GoalDetailsScreen() {
   const colors = useColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const amount = useAmount();
   const text = useText();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -74,9 +76,9 @@ export default function GoalDetailsScreen() {
           {goal.completed ? <Text style={styles.completed}>{text('common.completed')}</Text> : null}
           <View style={styles.figures}>
             <View style={styles.figureCopy}>
-              <Text style={styles.amount}>{formatInr(goal.allocatedPaise)}</Text>
-              <Text style={styles.of}>{text('home.ofAmount', { amount: formatInr(goal.targetPaise) })}</Text>
-              <Text style={styles.remaining}>{text('common.remaining', { amount: formatInr(goal.remainingPaise) })}</Text>
+              <Text style={styles.amount}>{amount(goal.allocatedPaise)}</Text>
+              <Text style={styles.of}>{text('home.ofAmount', { amount: amount(goal.targetPaise) })}</Text>
+              <Text style={styles.remaining}>{text('common.remaining', { amount: amount(goal.remainingPaise) })}</Text>
             </View>
             <Ring progress={goal.progress} />
           </View>
@@ -110,7 +112,7 @@ export default function GoalDetailsScreen() {
                 <Text style={styles.activityDate}>{formatDay(tx.date)}</Text>
               </View>
               <Text style={[styles.activityAmount, outgoing && styles.negative]}>
-                {outgoing ? '-' : '+'}{formatInr(tx.amountPaise)}
+                {outgoing ? '-' : '+'}{amount(tx.amountPaise)}
               </Text>
             </Pressable>
           );
@@ -145,7 +147,7 @@ export default function GoalDetailsScreen() {
         visible={confirming}
         title={text('goal.deleteTitle', { name: goal.name })}
         message={goal.allocatedPaise > 0
-          ? text('goal.deleteFunded', { amount: formatInr(goal.allocatedPaise) })
+          ? text('goal.deleteFunded', { amount: amount(goal.allocatedPaise) })
           : text('goal.deleteEmpty')}
         confirmLabel={text('goal.delete')}
         tone="danger"

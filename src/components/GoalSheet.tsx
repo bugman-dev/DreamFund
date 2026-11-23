@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Check, Search, X } from 'lucide-react-native';
-import { formatInr } from '../domain/ledger';
+import { useAmount } from '../currency/Currency';
 import type { PresentedGoal } from '../data/present';
 import { useText } from '../locale';
 import type { Palette } from '../theme/palettes';
@@ -24,6 +24,7 @@ export function GoalSheet({
 }) {
   const colors = useColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const amount = useAmount();
   const text = useText();
   const [query, setQuery] = useState('');
 
@@ -65,7 +66,7 @@ export function GoalSheet({
                 <GoalImage uri={goal.imageUri} style={styles.thumb} iconSize={16} />
                 <View style={styles.copy}>
                   <Text style={styles.name}>{goal.name}</Text>
-                  <Text style={styles.meta}>{text('money.savedMeta', { amount: formatInr(goal.allocatedPaise) })}</Text>
+                  <Text style={styles.meta}>{text('money.savedMeta', { amount: amount(goal.allocatedPaise) })}</Text>
                 </View>
                 {selected ? <Check color={colors.forest} size={18} /> : null}
               </Pressable>

@@ -5,7 +5,7 @@ import { ChevronDown, ImagePlus } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { parseRupees } from '../domain/ledger';
 import type { Category } from '../domain/categories';
-import { formatInr } from '../domain/ledger';
+import { useAmount } from '../currency/Currency';
 import { PRESET_IMAGE_PREFIX } from '../constants';
 import { useText } from '../locale';
 import type { Palette } from '../theme/palettes';
@@ -42,6 +42,7 @@ export function GoalForm({
 }) {
   const colors = useColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const amount = useAmount();
   const text = useText();
   const router = useRouter();
   const [name, setName] = useState(initial.name);
@@ -115,7 +116,7 @@ export function GoalForm({
         <Field label={text('goal.target')}>
           <TextField value={target} onChangeText={setTarget} placeholder={text('goal.targetPlaceholder')} />
         </Field>
-        {allocatedPaise > 0 ? <Text style={styles.hint}>{text('goal.minimumTarget', { amount: formatInr(allocatedPaise) })}</Text> : null}
+        {allocatedPaise > 0 ? <Text style={styles.hint}>{text('goal.minimumTarget', { amount: amount(allocatedPaise) })}</Text> : null}
         <DateField label={text('goal.targetDate')} value={targetDate} onChange={setTargetDate} optional />
         {error ? <ErrorText>{error}</ErrorText> : null}
       </View>
