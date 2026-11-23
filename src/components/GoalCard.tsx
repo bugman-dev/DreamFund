@@ -7,7 +7,7 @@ import { fonts } from '../theme/type';
 import { GoalImage } from './GoalImage';
 import { CategoryChip, ProgressBar } from './ui';
 
-export function GoalCard({ goal, onPress }: { goal: PresentedGoal; onPress: () => void }) {
+export function GoalCard({ goal, note, onPress }: { goal: PresentedGoal; note?: string; onPress: () => void }) {
   const text = useText();
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={goal.name} onPress={onPress} style={styles.card}>
@@ -23,6 +23,7 @@ export function GoalCard({ goal, onPress }: { goal: PresentedGoal; onPress: () =
           <Text style={styles.percent}>{goal.progress}%</Text>
         </View>
         <ProgressBar progress={goal.progress} />
+        {note ? <Text style={styles.note} numberOfLines={2}>{note}</Text> : null}
         {goal.completed ? <Text style={styles.done}>{text('common.completed')}</Text> : null}
       </View>
     </Pressable>
@@ -39,5 +40,6 @@ const styles = StyleSheet.create({
   saved: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ink },
   target: { flex: 1, fontFamily: fonts.regular, fontSize: 12, color: colors.muted },
   percent: { fontFamily: fonts.semibold, fontSize: 12, color: colors.sage },
+  note: { fontFamily: fonts.regular, fontSize: 13, color: colors.ink },
   done: { fontFamily: fonts.medium, fontSize: 12, color: colors.sage },
 });

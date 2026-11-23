@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Search } from 'lucide-react-native';
+import { compareTransactions } from '../../src/domain/ledger';
 import { GoalCard } from '../../src/components/GoalCard';
 import { EmptyState, FilterChip, Screen, Title } from '../../src/components/ui';
 import { useBooks } from '../../src/data/useBooks';
@@ -25,6 +26,17 @@ export default function GoalsScreen() {
     [books.active, categoryId, query],
   );
   const categoryName = books.categories.find((category) => category.id === categoryId)?.name;
+  const notes = useMemo(() => {
+    const latest = new Map<string, string>();
+    const ordered = [...books.transactions].sort(compareTransactions);
+    for (const tx of ordered) {
+      const note = tx.note.trim();
+      if (!note) continue;
+      latest.set(tx.goalId, note);
+      if (tx.counterGoalId) latest.set(tx.counterGoalId, note);
+    }
+    return latest;
+  }, [books.transactions]);
 
   return (
     <Screen>
@@ -58,7 +70,7 @@ export default function GoalsScreen() {
           onAction={() => router.push('/goal/create')}
         />
       ) : (
-        goals.map((goal) => <GoalCard key={goal.id} goal={goal} onPress={() => router.push(`/goal/${goal.id}`)} />)
+        goals.map((goal) => <GoalCard key={goal.id} goal={goal} note={notes.get(goal.id)} onPress={() => router.push(`/goal/${goal.id}`)} />)
       )}
     </Screen>
   );

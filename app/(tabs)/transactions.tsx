@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeftRight, Minus, Plus } from 'lucide-react-native';
 import { formatDay, formatMonth } from '../../src/domain/dates';
 import { compareTransactions, formatInr } from '../../src/domain/ledger';
-import { transactionDetail, transactionTitle } from '../../src/data/present';
+import { transactionTitle } from '../../src/data/present';
 import { EmptyState, FilterChip, Screen, Title } from '../../src/components/ui';
 import { useBooks } from '../../src/data/useBooks';
 import { useText, type MessageId } from '../../src/locale';
@@ -75,8 +75,8 @@ export default function TransactionsScreen() {
                   </View>
                   <View style={styles.copy}>
                     <Text style={styles.rowTitle}>{transactionTitle(tx, books.goals)}</Text>
-                    <Text style={styles.rowDetail}>{transactionDetail(tx, books.goals) || formatDay(tx.date)}</Text>
-                    {tx.note ? <Text style={styles.rowDate}>{formatDay(tx.date)}</Text> : null}
+                    <Text style={styles.rowDetail}>{formatDay(tx.date)}</Text>
+                    {tx.note.trim() ? <Text style={styles.note} numberOfLines={2}>{tx.note.trim()}</Text> : null}
                   </View>
                   <Text style={[styles.amount, positive && styles.amountPositive, negative && styles.amountNegative]}>
                     {negative ? '-' : positive ? '+' : ''}{formatInr(tx.amountPaise)}
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
   copy: { flex: 1 },
   rowTitle: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ink },
   rowDetail: { fontFamily: fonts.regular, fontSize: 12, color: colors.muted, marginTop: 2 },
-  rowDate: { fontFamily: fonts.regular, fontSize: 12, color: colors.muted, marginTop: 2 },
+  note: { fontFamily: fonts.regular, fontSize: 13, color: colors.ink, marginTop: 2 },
   amount: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ink },
   amountPositive: { color: colors.sage },
   amountNegative: { color: colors.rose },

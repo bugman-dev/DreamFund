@@ -56,8 +56,3 @@ export function transactionTitle(tx: TxRecord, goals: GoalRecord[]): string {
   return t('present.transfer', { goal: goalName(goals, tx.goalId), counter: goalName(goals, tx.counterGoalId) });
 }
 
-export function transactionDetail(tx: TxRecord, goals: GoalRecord[]): string {
-  if (tx.note) return tx.note;
-  if (tx.type === 'transfer') return t('present.from', { goal: goalName(goals, tx.goalId) });
-  return '';
-}
