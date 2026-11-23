@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { isCurrencyId, writeActiveCurrency, formatAmount, type CurrencyId } from '../domain/money';
+import { isCurrencyId, formatAmount, type CurrencyId } from '../domain/money';
 import { loadCurrency, saveCurrency } from './storage';
 
 type CurrencyValue = {
@@ -18,7 +18,6 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     let active = true;
     loadCurrency()
       .then((stored) => {
-        writeActiveCurrency(stored);
         if (active) setId(stored);
       })
       .finally(() => {
@@ -31,7 +30,6 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 
   const setCurrency = useCallback((next: CurrencyId) => {
     if (!isCurrencyId(next)) return;
-    writeActiveCurrency(next);
     setId(next);
     void saveCurrency(next);
   }, []);

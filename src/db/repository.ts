@@ -1,3 +1,4 @@
+import type { CurrencyId } from '../domain/money';
 import { createId } from '../domain/id';
 import type { BackupFile } from '../domain/backup';
 import { restoreBackup } from '../domain/backup';
@@ -13,7 +14,7 @@ import {
   applyGoalPatch,
   applyTransfer,
   applyWithdrawal,
-  project,
+  replayLedger,
   reconciliationError,
   validateGoalDraft,
   type AuditRecord,
@@ -100,11 +101,11 @@ export async function ensureUser(user: SessionUser): Promise<void> {
   });
 }
 
-export async function loadAll(userId: string): Promise<LoadedData> {
+export async function loadAll(userId: string, currency: CurrencyId = 'inr'): Promise<LoadedData> {
   return enqueue(async () => {
     const db = await getDatabase();
     const state = await readState(userId);
-    const projected = project(state);
+    const projected = replayLedger(state, currency);
     if (!projected.ok) throw new Error(projected.error);
     for (const goal of state.goals) {
       const amount = projected.allocated.get(goal.id) ?? 0;
@@ -181,8 +182,9 @@ export async function deleteCategory(userId: string, id: string): Promise<void> 
 export async function createGoal(
   userId: string,
   input: { name: string; categoryId: string; targetPaise: number; targetDate: string | null; imageUri: string | null },
+  currency: CurrencyId = 'inr',
 ): Promise<string> {
-  const invalid = validateGoalDraft(input);
+  const invalid = validateGoalDraft(input, currency);
   if (invalid) throw new Error(invalid);
   const id = createId();
   await enqueue(async () => {
@@ -210,15 +212,16 @@ export async function updateGoal(
   userId: string,
   goalId: string,
   patch: { name?: string; categoryId?: string; targetPaise?: number; targetDate?: string | null; imageUri?: string | null },
+  currency: CurrencyId = 'inr',
 ): Promise<void> {
   if (patch.categoryId) {
     const categories = await readCategories(userId);
     if (!categories.some((category) => category.id === patch.categoryId)) throw new Error(t('common.chooseCategory'));
   }
-  await mutate(userId, (state) => applyGoalPatch(state, goalId, patch));
+  await mutate(userId, (state) => applyGoalPatch(state, goalId, patch, currency), currency);
 }
 
-export async function deleteGoal(userId: string, goalId: string): Promise<void> {
+export async function deleteGoal(userId: string, goalId: string, currency: CurrencyId = 'inr'): Promise<void> {
   const categories = await readCategories(userId);
   await mutate(userId, (state, clock) => {
     const goal = state.goals.find((item) => item.id === goalId);
@@ -227,30 +230,40 @@ export async function deleteGoal(userId: string, goalId: string): Promise<void> 
       goalId,
       categoryName: category?.name ?? goal?.categorySnapshot ?? t('present.category'),
       categoryIcon: category?.icon ?? goal?.categoryIconSnapshot ?? FALLBACK_ICON,
-    }, clock);
-  });
+    }, clock, currency);
+  }, currency);
 }
 
-export async function addMoney(userId: string, input: { goalId: string; amountPaise: number; date: string; note: string }): Promise<void> {
-  await mutate(userId, (state, clock) => applyAddition(state, input, clock));
+export async function addMoney(
+  userId: string,
+  input: { goalId: string; amountPaise: number; date: string; note: string },
+  currency: CurrencyId = 'inr',
+): Promise<void> {
+  await mutate(userId, (state, clock) => applyAddition(state, input, clock, currency), currency);
 }
 
-export async function withdrawMoney(userId: string, input: { goalId: string; amountPaise: number; date: string; note: string }): Promise<void> {
-  await mutate(userId, (state, clock) => applyWithdrawal(state, input, clock));
+export async function withdrawMoney(
+  userId: string,
+  input: { goalId: string; amountPaise: number; date: string; note: string },
+  currency: CurrencyId = 'inr',
+): Promise<void> {
+  await mutate(userId, (state, clock) => applyWithdrawal(state, input, clock, currency), currency);
 }
 
 export async function transferMoney(
   userId: string,
   input: { fromGoalId: string; toGoalId: string; amountPaise: number; date: string; note: string },
+  currency: CurrencyId = 'inr',
 ): Promise<void> {
-  await mutate(userId, (state, clock) => applyTransfer(state, input, clock));
+  await mutate(userId, (state, clock) => applyTransfer(state, input, clock, currency), currency);
 }
 
 export async function editTransaction(
   userId: string,
   input: { transactionId: string; amountPaise?: number; date?: string; note?: string; goalId?: string; counterGoalId?: string | null },
+  currency: CurrencyId = 'inr',
 ): Promise<void> {
-  await mutate(userId, (state, clock) => applyEdit(state, input, clock));
+  await mutate(userId, (state, clock) => applyEdit(state, input, clock, currency), currency);
 }
 
 export async function savePreferences(userId: string, preferences: Preferences): Promise<void> {
@@ -284,10 +297,10 @@ export async function buildBackup(userId: string): Promise<BackupFile> {
   };
 }
 
-export async function importBackup(userId: string, raw: unknown): Promise<void> {
-  const restored = restoreBackup(raw, deviceClock());
+export async function importBackup(userId: string, raw: unknown, currency: CurrencyId = 'inr'): Promise<void> {
+  const restored = restoreBackup(raw, deviceClock(), currency);
   if (!restored.ok) throw new Error(restored.error);
-  const projected = project(restored.data.state);
+  const projected = replayLedger(restored.data.state, currency);
   if (!projected.ok) throw new Error(projected.error);
   await enqueue(async () => {
     const db = await getDatabase();
@@ -342,7 +355,11 @@ export async function importBackup(userId: string, raw: unknown): Promise<void> 
   });
 }
 
-async function mutate(userId: string, recipe: (state: LedgerState, clock: ReturnType<typeof deviceClock>) => LedgerResult): Promise<void> {
+async function mutate(
+  userId: string,
+  recipe: (state: LedgerState, clock: ReturnType<typeof deviceClock>) => LedgerResult,
+  currency: CurrencyId = 'inr',
+): Promise<void> {
   await enqueue(async () => {
     const db = await getDatabase();
     await db.withTransactionAsync(async () => {
@@ -350,7 +367,7 @@ async function mutate(userId: string, recipe: (state: LedgerState, clock: Return
       const clock = deviceClock();
       const result = recipe(state, clock);
       if (!result.ok) throw new Error(result.error);
-      const projected = project(result.state);
+      const projected = replayLedger(result.state, currency);
       if (!projected.ok) throw new Error(projected.error);
       if (reconciliationError(result.state, projected.allocated)) throw new Error(t('error.reconcile'));
       await writeGoals(userId, result.state, projected.allocated);

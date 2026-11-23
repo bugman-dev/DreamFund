@@ -13,17 +13,7 @@ const SYMBOL: Record<CurrencyId, string> = {
   aed: 'AED ',
 };
 
-let active: CurrencyId = 'inr';
-
-export function readActiveCurrency(): CurrencyId {
-  return active;
-}
-
-export function writeActiveCurrency(id: CurrencyId) {
-  active = id;
-}
-
-export function formatAmount(paise: number, currency: CurrencyId = active): string {
+export function formatAmount(paise: number, currency: CurrencyId): string {
   const negative = paise < 0;
   const absolute = Math.abs(paise);
   const major = Math.trunc(absolute / PAISE_PER_RUPEE);

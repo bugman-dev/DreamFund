@@ -8,7 +8,8 @@ import { NOTE_LIMIT, paiseToInput, parseRupees } from '../../src/domain/ledger';
 import { ConfirmModal } from '../../src/components/ConfirmModal';
 import { DateField } from '../../src/components/DateField';
 import { Button, ErrorText, Field, Screen, ScreenHeader } from '../../src/components/ui';
-import { useBooks } from '../../src/data/useBooks';
+import { useGoalSummary } from '../../src/data/useGoalSummary';
+import { useData } from '../../src/data/store';
 import { useText } from '../../src/locale';
 import type { Palette } from '../../src/theme/palettes';
 import { useColors } from '../../src/theme/Theme';
@@ -21,7 +22,7 @@ export default function EditTransactionScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const txId = typeof id === 'string' ? id : '';
-  const books = useBooks();
+  const books = useGoalSummary();
   const tx = books.transactions.find((item) => item.id === txId);
   if (!tx) {
     return (
@@ -34,13 +35,14 @@ export default function EditTransactionScreen() {
   return <Editor tx={tx} />;
 }
 
-function Editor({ tx }: { tx: NonNullable<ReturnType<typeof useBooks>['transactions'][number]> }) {
+function Editor({ tx }: { tx: NonNullable<ReturnType<typeof useGoalSummary>['transactions'][number]> }) {
   const colors = useColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const money = useAmount();
   const text = useText();
   const router = useRouter();
-  const books = useBooks();
+  const books = useGoalSummary();
+  const data = useData();
   const locked = tx.lockedReason === GOAL_DELETED_REASON;
   const [amount, setAmount] = useState(paiseToInput(tx.amountPaise));
   const [date, setDate] = useState(tx.date);
@@ -61,7 +63,7 @@ function Editor({ tx }: { tx: NonNullable<ReturnType<typeof useBooks>['transacti
     }
     setSaving(true);
     try {
-      await books.editTransaction({
+      await data.editTransaction({
         transactionId: tx.id,
         amountPaise,
         date,

@@ -9,10 +9,11 @@ import {
   TRANSACTION_TYPES,
 } from '../constants';
 import { t } from '../locale/messages';
+import type { CurrencyId } from './money';
 import type { Category } from './categories';
 import { isIconName } from './icons';
 import {
-  project,
+  replayLedger,
   type AuditRecord,
   type Clock,
   type GoalRecord,
@@ -48,6 +49,7 @@ const TX_TYPES: TxType[] = [...TRANSACTION_TYPES];
 export function restoreBackup(
   raw: unknown,
   clock: Clock,
+  currency: CurrencyId = 'inr',
 ): { ok: true; data: RestoredBackup } | { ok: false; error: string } {
   if (!isRecord(raw) || raw.version !== BACKUP_VERSION) return fail(t('backup.notFile'));
   if (!Array.isArray(raw.categories) || !Array.isArray(raw.goals) || !Array.isArray(raw.transactions) || !Array.isArray(raw.audits)) {
@@ -148,7 +150,7 @@ export function restoreBackup(
   }
 
   const state: LedgerState = { goals, transactions, audits };
-  const projected = project(state);
+  const projected = replayLedger(state, currency);
   if (!projected.ok) return projected;
 
   return {

@@ -7,7 +7,7 @@ import { useAmount } from '../../src/currency/Currency';
 import { compareTransactions } from '../../src/domain/ledger';
 import { transactionTitle } from '../../src/data/present';
 import { EmptyState, FilterChip, Screen, Title } from '../../src/components/ui';
-import { useBooks } from '../../src/data/useBooks';
+import { useGoalSummary } from '../../src/data/useGoalSummary';
 import { useText, type MessageId } from '../../src/locale';
 import type { Palette } from '../../src/theme/palettes';
 import { useColors } from '../../src/theme/Theme';
@@ -36,7 +36,7 @@ export default function TransactionsScreen() {
   const params = useLocalSearchParams<{ goalId?: string; type?: string }>();
   const goalId = typeof params.goalId === 'string' ? params.goalId : '';
   const type = transactionFilter(params.type);
-  const books = useBooks();
+  const books = useGoalSummary();
   const goal = books.presented.find((item) => item.id === goalId);
   const rows = useMemo(() => {
     return books.transactions

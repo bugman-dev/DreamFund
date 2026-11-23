@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ICON_NAMES } from '../src/domain/icons';
 import type { Category } from '../src/domain/categories';
+import { CategoryDraftFields } from '../src/components/CategoryDraftFields';
 import { AppIcon } from '../src/components/icons';
-import { Button, ErrorText, Screen, ScreenHeader } from '../src/components/ui';
+import { Button, Screen, ScreenHeader } from '../src/components/ui';
 import { useData } from '../src/data/store';
 import { useText } from '../src/locale';
 import type { Palette } from '../src/theme/palettes';
@@ -87,15 +87,7 @@ export default function CategoriesScreen() {
         <Pressable style={styles.backdrop} onPress={close}>
           <Pressable style={styles.sheet} onPress={() => undefined}>
             <Text style={styles.sheetTitle}>{creating ? text('categories.new') : text('categories.editTitle')}</Text>
-            <TextInput value={name} onChangeText={setName} placeholder={text('categories.namePlaceholder')} placeholderTextColor={colors.muted} style={styles.input} />
-            <View style={styles.icons}>
-              {ICON_NAMES.map((item) => (
-                <Pressable key={item} accessibilityRole="button" onPress={() => setIcon(item)} style={[styles.choice, icon === item && styles.choiceSelected]}>
-                  <AppIcon name={item} size={16} color={icon === item ? colors.onForest : colors.forest} />
-                </Pressable>
-              ))}
-            </View>
-            {error ? <ErrorText>{error}</ErrorText> : null}
+            <CategoryDraftFields name={name} onChangeName={setName} icon={icon} onChangeIcon={setIcon} error={error} />
             {editing ? (
               <View style={styles.actions}>
                 <View style={styles.action}>
@@ -128,9 +120,5 @@ function createStyles(colors: Palette) {
   sheetTitle: { fontFamily: fonts.semibold, fontSize: 20, color: colors.ink },
   actions: { flexDirection: 'row', gap: 10 },
   action: { flex: 1 },
-  input: { backgroundColor: colors.white, borderRadius: 14, borderWidth: 1, borderColor: colors.grey, minHeight: 48, paddingHorizontal: 14, fontFamily: fonts.regular, fontSize: 16, color: colors.ink },
-  icons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  choice: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.paleSage, alignItems: 'center', justifyContent: 'center' },
-  choiceSelected: { backgroundColor: colors.forest },
   });
 }

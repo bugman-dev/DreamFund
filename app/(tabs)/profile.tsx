@@ -1,17 +1,18 @@
 import { useMemo, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import appConfig from '../../app.json';
-import { Check, ChevronRight } from 'lucide-react-native';
+import { ChevronRight } from 'lucide-react-native';
 import { formatClock } from '../../src/domain/dates';
 import { useSession } from '../../src/auth/session';
 import { useCurrency } from '../../src/currency/Currency';
-import { CURRENCY_IDS, type CurrencyId } from '../../src/domain/money';
+import type { CurrencyId } from '../../src/domain/money';
 import { ConfirmModal } from '../../src/components/ConfirmModal';
-import { Button, Card, ErrorText, Screen, Title } from '../../src/components/ui';
+import { CurrencySheet, ThemeSheet } from '../../src/components/PreferenceSheets';
+import { Button, Card, Screen, Title } from '../../src/components/ui';
 import { useData } from '../../src/data/store';
 import { useText, type MessageId } from '../../src/locale';
-import { PALETTE_IDS, palettes, type Palette, type PaletteId } from '../../src/theme/palettes';
+import type { Palette, PaletteId } from '../../src/theme/palettes';
 import { useColors, useTheme } from '../../src/theme/Theme';
 import { fonts } from '../../src/theme/type';
 
@@ -19,18 +20,6 @@ const THEME_LABEL: Record<PaletteId, MessageId> = {
   forest: 'theme.forest',
   ocean: 'theme.ocean',
   dusk: 'theme.dusk',
-};
-
-const CURRENCY_LABEL: Record<CurrencyId, MessageId> = {
-  inr: 'currency.inr',
-  usd: 'currency.usd',
-  aed: 'currency.aed',
-};
-
-const CURRENCY_MARK: Record<CurrencyId, string> = {
-  inr: '₹',
-  usd: '$',
-  aed: 'د.إ',
 };
 
 const CURRENCY_VALUE: Record<CurrencyId, string> = {
@@ -48,12 +37,9 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { user, signOut } = useSession();
   const data = useData();
-  const [error, setError] = useState<string | null>(null);
-  const [confirming, setConfirming] = useState<'signout' | 'import' | null>(null);
+  const [confirming, setConfirming] = useState(false);
   const [themesOpen, setThemesOpen] = useState(false);
-  const [draftTheme, setDraftTheme] = useState<PaletteId>(themeId);
   const [currencyOpen, setCurrencyOpen] = useState(false);
-  const [draftCurrency, setDraftCurrency] = useState<CurrencyId>(currencyId);
   const initial = user?.name?.trim().charAt(0).toUpperCase() || 'D';
 
   return (
@@ -72,18 +58,12 @@ export default function ProfileScreen() {
       <Row
         label={text('profile.currency')}
         value={CURRENCY_VALUE[currencyId]}
-        onPress={() => {
-          setDraftCurrency(currencyId);
-          setCurrencyOpen(true);
-        }}
+        onPress={() => setCurrencyOpen(true)}
       />
       <Row
         label={text('profile.appThemes')}
         value={text(THEME_LABEL[themeId])}
-        onPress={() => {
-          setDraftTheme(themeId);
-          setThemesOpen(true);
-        }}
+        onPress={() => setThemesOpen(true)}
       />
       <Row label={text('profile.categories')} onPress={() => router.push('/categories')} />
       <View style={[styles.row, styles.unavailable]}>
@@ -106,87 +86,37 @@ export default function ProfileScreen() {
         <Text style={styles.aboutTitle}>{text('profile.version', { version: appConfig.expo.version })}</Text>
         <Text style={styles.aboutBody}>{text('profile.aboutBody')}</Text>
       </Card>
-      {error ? <View style={styles.error}><ErrorText>{error}</ErrorText></View> : null}
       <View style={styles.signOut}>
-        <Button label={text('profile.signOut')} tone="danger" onPress={() => setConfirming('signout')} />
+        <Button label={text('profile.signOut')} tone="danger" onPress={() => setConfirming(true)} />
       </View>
       <ConfirmModal
-        visible={confirming === 'signout'}
+        visible={confirming}
         title={text('profile.signOutTitle')}
         message={text('profile.signOutMessage')}
         confirmLabel={text('profile.signOut')}
         tone="danger"
-        onCancel={() => setConfirming(null)}
+        onCancel={() => setConfirming(false)}
         onConfirm={() => {
-          setConfirming(null);
+          setConfirming(false);
           void signOut().then(() => router.replace('/welcome'));
         }}
       />
-      <Modal visible={currencyOpen} transparent animationType="fade" onRequestClose={() => setCurrencyOpen(false)}>
-        <Pressable style={styles.backdrop} onPress={() => setCurrencyOpen(false)}>
-          <Pressable style={styles.sheet} onPress={() => undefined}>
-            <Text style={styles.sheetTitle}>{text('profile.currency')}</Text>
-            <View style={styles.currencyList}>
-              {CURRENCY_IDS.map((id) => {
-                const selected = draftCurrency === id;
-                return (
-                  <Pressable key={id} accessibilityRole="button" accessibilityState={{ selected }} onPress={() => setDraftCurrency(id)} style={[styles.currencyRow, selected && styles.currencyRowSelected]}>
-                    <Text style={styles.currencyName}>{text(CURRENCY_LABEL[id])}</Text>
-                    <Text style={styles.currencyMark}>{CURRENCY_MARK[id]}</Text>
-                    {selected ? <Check color={colors.forest} size={18} strokeWidth={2.6} /> : <View style={styles.currencyCheckSpace} />}
-                  </Pressable>
-                );
-              })}
-            </View>
-            <Text style={styles.currencyNote}>{text('profile.currencyNote')}</Text>
-            <Button
-              label={text('profile.applyCurrency')}
-              onPress={() => {
-                setCurrency(draftCurrency);
-                setCurrencyOpen(false);
-              }}
-            />
-          </Pressable>
-        </Pressable>
-      </Modal>
-      <Modal visible={themesOpen} transparent animationType="fade" onRequestClose={() => setThemesOpen(false)}>
-        <Pressable style={styles.backdrop} onPress={() => setThemesOpen(false)}>
-          <Pressable style={styles.sheet} onPress={() => undefined}>
-            <Text style={styles.sheetTitle}>{text('profile.appThemes')}</Text>
-            <View style={styles.swatches}>
-              {PALETTE_IDS.map((paletteId) => {
-                const selected = draftTheme === paletteId;
-                const swatch = palettes[paletteId];
-                return (
-                  <Pressable key={paletteId} accessibilityRole="button" accessibilityState={{ selected }} onPress={() => setDraftTheme(paletteId)} style={styles.themeOption}>
-                    <View style={[styles.swatch, { backgroundColor: swatch.forest }, selected && styles.swatchSelected]}>
-                      {selected ? <Check color={swatch.onForest} size={22} strokeWidth={2.6} /> : null}
-                    </View>
-                    <Text style={styles.themeName}>{text(THEME_LABEL[paletteId])}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-            <Button
-              label={text('profile.applyTheme')}
-              onPress={() => {
-                setTheme(draftTheme);
-                setThemesOpen(false);
-              }}
-            />
-          </Pressable>
-        </Pressable>
-      </Modal>
-      <ConfirmModal
-        visible={confirming === 'import'}
-        title={text('profile.restoreTitle')}
-        message={text('profile.restoreMessage')}
-        confirmLabel={text('profile.chooseFile')}
-        tone="danger"
-        onCancel={() => setConfirming(null)}
-        onConfirm={() => {
-          setConfirming(null);
-          void data.importBackup().catch((reason: unknown) => setError(reason instanceof Error ? reason.message : text('profile.importFailed')));
+      <CurrencySheet
+        visible={currencyOpen}
+        currentId={currencyId}
+        onClose={() => setCurrencyOpen(false)}
+        onApply={(id) => {
+          setCurrency(id);
+          setCurrencyOpen(false);
+        }}
+      />
+      <ThemeSheet
+        visible={themesOpen}
+        currentId={themeId}
+        onClose={() => setThemesOpen(false)}
+        onApply={(id) => {
+          setTheme(id);
+          setThemesOpen(false);
         }}
       />
     </Screen>
@@ -231,22 +161,6 @@ function createStyles(colors: Palette) {
   about: { marginHorizontal: 20 },
   aboutTitle: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ink },
   aboutBody: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 21, color: colors.muted, marginTop: 6 },
-  error: { paddingHorizontal: 20 },
   signOut: { paddingHorizontal: 20, marginTop: 20 },
-  backdrop: { flex: 1, backgroundColor: 'rgba(30, 40, 35, 0.4)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: colors.ivory, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 16 },
-  sheetTitle: { fontFamily: fonts.semibold, fontSize: 20, color: colors.ink },
-  swatches: { flexDirection: 'row', gap: 12 },
-  themeOption: { flex: 1, alignItems: 'center', gap: 8 },
-  swatch: { width: '100%', aspectRatio: 1, maxWidth: 88, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  swatchSelected: { borderWidth: 3, borderColor: colors.ink },
-  themeName: { fontFamily: fonts.medium, fontSize: 13, color: colors.ink, textAlign: 'center' },
-  currencyList: { gap: 8 },
-  currencyRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.white, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14 },
-  currencyRowSelected: { backgroundColor: colors.paleSage },
-  currencyName: { flex: 1, fontFamily: fonts.medium, fontSize: 16, color: colors.ink },
-  currencyMark: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ink },
-  currencyCheckSpace: { width: 18 },
-  currencyNote: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18, color: colors.muted },
   });
 }

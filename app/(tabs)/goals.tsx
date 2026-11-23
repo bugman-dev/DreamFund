@@ -5,7 +5,7 @@ import { Search } from 'lucide-react-native';
 import { compareTransactions } from '../../src/domain/ledger';
 import { GoalCard } from '../../src/components/GoalCard';
 import { EmptyState, FilterChip, Screen, Title } from '../../src/components/ui';
-import { useBooks } from '../../src/data/useBooks';
+import { useGoalSummary } from '../../src/data/useGoalSummary';
 import { useText } from '../../src/locale';
 import type { Palette } from '../../src/theme/palettes';
 import { useColors } from '../../src/theme/Theme';
@@ -16,7 +16,7 @@ export default function GoalsScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   const router = useRouter();
-  const books = useBooks();
+  const books = useGoalSummary();
   const [categoryId, setCategoryId] = useState('all');
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState('');

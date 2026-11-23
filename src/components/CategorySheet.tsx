@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Check, ChevronDown, ChevronRight, Search, X } from 'lucide-react-native';
-import { ICON_NAMES } from '../domain/icons';
 import { useData } from '../data/store';
 import { useText } from '../locale';
 import type { Palette } from '../theme/palettes';
 import { useColors } from '../theme/Theme';
 import { fonts } from '../theme/type';
+import { CategoryDraftFields } from './CategoryDraftFields';
 import { AppIcon } from './icons';
 import { Button } from './ui';
 
@@ -94,29 +94,10 @@ export function CategorySheet({
           </Pressable>
           {adding ? (
             <>
-              <TextInput
-                value={name}
-                onChangeText={setName}
-                placeholder={text('category.namePlaceholder')}
-                placeholderTextColor={colors.muted}
-                style={styles.nameInput}
-              />
-              <Text style={styles.choose}>{text('category.chooseIcon')}</Text>
-              <View style={styles.icons}>
-                {ICON_NAMES.map((item) => (
-                  <Pressable
-                    key={item}
-                    accessibilityRole="button"
-                    accessibilityLabel={item}
-                    onPress={() => setIcon(item)}
-                    style={[styles.choice, icon === item && styles.choiceSelected]}
-                  >
-                    <AppIcon name={item} size={18} color={icon === item ? colors.onForest : colors.forest} />
-                  </Pressable>
-                ))}
+              <CategoryDraftFields name={name} onChangeName={setName} icon={icon} onChangeIcon={setIcon} error={error} />
+              <View style={styles.addAction}>
+                <Button label={name.trim() ? text('category.addNamed', { name: name.trim() }) : text('categories.add')} onPress={addCategory} disabled={saving || !name.trim()} />
               </View>
-              {error ? <Text style={styles.error}>{error}</Text> : null}
-              <Button label={name.trim() ? text('category.addNamed', { name: name.trim() }) : text('categories.add')} onPress={addCategory} disabled={saving || !name.trim()} />
             </>
           ) : null}
         </ScrollView>
@@ -152,21 +133,6 @@ function createStyles(colors: Palette) {
   empty: { fontFamily: fonts.regular, fontSize: 15, color: colors.muted, paddingVertical: 12 },
   addHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 18, marginBottom: 10 },
   addTitle: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ink },
-  nameInput: {
-    backgroundColor: colors.white,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.grey,
-    minHeight: 48,
-    paddingHorizontal: 14,
-    fontFamily: fonts.regular,
-    fontSize: 16,
-    color: colors.ink,
-  },
-  choose: { fontFamily: fonts.medium, fontSize: 13, color: colors.muted, marginTop: 14, marginBottom: 10 },
-  icons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-  choice: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.paleSage, alignItems: 'center', justifyContent: 'center' },
-  choiceSelected: { backgroundColor: colors.forest },
-  error: { fontFamily: fonts.medium, fontSize: 13, color: colors.rose, marginBottom: 10 },
+  addAction: { marginTop: 16 },
   });
 }

@@ -12,7 +12,8 @@ import { transactionTitle } from '../../src/data/present';
 import { ConfirmModal } from '../../src/components/ConfirmModal';
 import { GoalImage } from '../../src/components/GoalImage';
 import { Button, CategoryChip, EmptyState } from '../../src/components/ui';
-import { useBooks } from '../../src/data/useBooks';
+import { useGoalSummary } from '../../src/data/useGoalSummary';
+import { useData } from '../../src/data/store';
 import { useText } from '../../src/locale';
 import type { Palette } from '../../src/theme/palettes';
 import { useColors } from '../../src/theme/Theme';
@@ -27,7 +28,8 @@ export default function GoalDetailsScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const goalId = typeof id === 'string' ? id : '';
-  const books = useBooks();
+  const books = useGoalSummary();
+  const data = useData();
   const goal = books.active.find((item) => item.id === goalId);
   const [menu, setMenu] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -50,7 +52,7 @@ export default function GoalDetailsScreen() {
 
   async function remove() {
     try {
-      await books.deleteGoal(current.id);
+      await data.deleteGoal(current.id);
       router.back();
     } catch (reason) {
       setConfirming(false);

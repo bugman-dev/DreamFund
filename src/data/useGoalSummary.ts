@@ -4,7 +4,7 @@ import { useColors } from '../theme/Theme';
 import { presentGoal } from './present';
 import { useData } from './store';
 
-export function useBooks() {
+export function useGoalSummary() {
   const data = useData();
   const colors = useColors();
   return useMemo(() => {
@@ -13,7 +13,10 @@ export function useBooks() {
     const saved = active.reduce((sum, goal) => sum + goal.allocatedPaise, 0);
     const target = active.reduce((sum, goal) => sum + goal.targetPaise, 0);
     return {
-      ...data,
+      ready: data.ready,
+      goals: data.goals,
+      transactions: data.transactions,
+      categories: data.categories,
       presented,
       active,
       saved,

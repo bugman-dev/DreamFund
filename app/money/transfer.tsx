@@ -1,17 +1,19 @@
 import { useLocalSearchParams } from 'expo-router';
 import { MoneyForm } from '../../src/components/MoneyForm';
-import { useBooks } from '../../src/data/useBooks';
+import { useGoalSummary } from '../../src/data/useGoalSummary';
+import { useData } from '../../src/data/store';
 
-export default function TransferScreen() {
+export default function TransferMoneyScreen() {
   const params = useLocalSearchParams<{ goalId?: string }>();
-  const books = useBooks();
+  const summary = useGoalSummary();
+  const data = useData();
   const goalId = typeof params.goalId === 'string' ? params.goalId : undefined;
   return (
     <MoneyForm
       mode="transfer"
-      goals={books.active}
+      goals={summary.active}
       initialGoalId={goalId}
-      onSubmit={(input) => books.transferMoney({
+      onSubmit={(input) => data.transferMoney({
         fromGoalId: input.goalId,
         toGoalId: input.counterGoalId ?? '',
         amountPaise: input.amountPaise,

@@ -7,7 +7,7 @@ import { useAmount } from '../../src/currency/Currency';
 import { useSession } from '../../src/auth/session';
 import { GoalCard } from '../../src/components/GoalCard';
 import { EmptyState, ProgressBar, Screen, SectionLabel } from '../../src/components/ui';
-import { useBooks } from '../../src/data/useBooks';
+import { useGoalSummary } from '../../src/data/useGoalSummary';
 import { useText, type MessageId } from '../../src/locale';
 import type { Palette } from '../../src/theme/palettes';
 import { useColors } from '../../src/theme/Theme';
@@ -27,7 +27,7 @@ export default function HomeScreen() {
   const text = useText();
   const router = useRouter();
   const { user } = useSession();
-  const books = useBooks();
+  const books = useGoalSummary();
   return (
     <Screen>
       <View style={styles.top}>

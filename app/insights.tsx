@@ -8,7 +8,7 @@ import { useAmount } from '../src/currency/Currency';
 import { netSaved } from '../src/domain/ledger';
 import { accentFor } from '../src/theme/colors';
 import { EmptyState, FilterChip, LoadingScreen, Screen, ScreenHeader } from '../src/components/ui';
-import { useBooks } from '../src/data/useBooks';
+import { useGoalSummary } from '../src/data/useGoalSummary';
 import { useText, type MessageId } from '../src/locale';
 import type { Palette } from '../src/theme/palettes';
 import { useColors } from '../src/theme/Theme';
@@ -26,7 +26,7 @@ export default function InsightsScreen() {
   const amount = useAmount();
   const text = useText();
   const router = useRouter();
-  const books = useBooks();
+  const books = useGoalSummary();
   const [period, setPeriod] = useState<Period>('month');
   const today = todayIso();
   const saved = netSaved(books.transactions, periodStart(period, today), today);
