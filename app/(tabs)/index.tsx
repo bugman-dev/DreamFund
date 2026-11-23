@@ -35,7 +35,7 @@ export default function HomeScreen() {
           <Text style={styles.greeting}>{greeting()},</Text>
           <Text style={styles.name}>{firstName(user?.name ?? '')}</Text>
         </View>
-        <Pressable accessibilityRole="button" accessibilityLabel={text('home.profile')} onPress={() => router.push('/(tabs)/profile')} style={styles.bell}>
+        <Pressable accessibilityRole="button" accessibilityLabel={text('home.profile')} accessibilityState={{ disabled: true }} disabled style={[styles.bell, styles.unavailable]}>
           <Bell color={colors.forest} size={20} />
         </Pressable>
       </View>
@@ -81,6 +81,7 @@ function createStyles(colors: Palette) {
   greeting: { fontFamily: fonts.regular, fontSize: 16, color: colors.muted },
   name: { fontFamily: fonts.bold, fontSize: 28, color: colors.ink },
   bell: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
+  unavailable: { opacity: 0.45 },
   summary: { marginHorizontal: 20, backgroundColor: colors.white, borderRadius: 12, padding: 20, gap: 8 },
   summaryLabel: { fontFamily: fonts.medium, fontSize: 13, color: colors.muted },
   summaryAmount: { fontFamily: fonts.bold, fontSize: 36, color: colors.ink },

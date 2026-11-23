@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Modal, Platform, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import appConfig from '../../app.json';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { Check, ChevronRight, X } from 'lucide-react-native';
 import { formatClock } from '../../src/domain/dates';
 import { useSession } from '../../src/auth/session';
@@ -51,30 +50,11 @@ export default function ProfileScreen() {
   const data = useData();
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<'signout' | 'import' | null>(null);
-  const [pickingTime, setPickingTime] = useState(false);
   const [themesOpen, setThemesOpen] = useState(false);
   const [draftTheme, setDraftTheme] = useState<PaletteId>(themeId);
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const [draftCurrency, setDraftCurrency] = useState<CurrencyId>(currencyId);
   const initial = user?.name?.trim().charAt(0).toUpperCase() || 'D';
-
-  async function toggleReminder(enabled: boolean) {
-    setError(null);
-    try {
-      await data.setReminder(enabled, data.preferences.reminderHour, data.preferences.reminderMinute);
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : text('profile.reminderFailed'));
-    }
-  }
-
-  async function changeTime(date: Date) {
-    setError(null);
-    try {
-      await data.setReminder(true, date.getHours(), date.getMinutes());
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : text('profile.reminderFailed'));
-    }
-  }
 
   return (
     <Screen>
@@ -106,36 +86,21 @@ export default function ProfileScreen() {
         }}
       />
       <Row label={text('profile.categories')} onPress={() => router.push('/categories')} />
-      {Platform.OS === 'web' ? null : (
-        <View style={styles.row}>
-          <View style={styles.rowCopy}>
-            <Text style={styles.rowLabel}>{text('profile.reminder')}</Text>
-            <Text style={styles.rowValue}>{data.preferences.reminderEnabled ? formatClock(data.preferences.reminderHour, data.preferences.reminderMinute) : text('profile.reminderOff')}</Text>
-          </View>
-          <Switch
-            value={data.preferences.reminderEnabled}
-            onValueChange={(value) => void toggleReminder(value)}
-            trackColor={{ true: colors.sage, false: colors.grey }}
-            thumbColor={colors.white}
-          />
+      <View style={[styles.row, styles.unavailable]}>
+        <View style={styles.rowCopy}>
+          <Text style={styles.rowLabel}>{text('profile.reminder')}</Text>
+          <Text style={styles.rowValue}>{data.preferences.reminderEnabled ? formatClock(data.preferences.reminderHour, data.preferences.reminderMinute) : text('profile.reminderOff')}</Text>
         </View>
-      )}
-      {Platform.OS !== 'web' && data.preferences.reminderEnabled ? (
-        <Row label={text('profile.reminderTime')} value={formatClock(data.preferences.reminderHour, data.preferences.reminderMinute)} onPress={() => setPickingTime(true)} />
-      ) : null}
-      {pickingTime && Platform.OS !== 'web' ? (
-        <DateTimePicker
-          value={clockDate(data.preferences.reminderHour, data.preferences.reminderMinute)}
-          mode="time"
-          onChange={(event, date) => {
-            setPickingTime(false);
-            if (event.type === 'set' && date) void changeTime(date);
-          }}
+        <Switch
+          disabled
+          value={data.preferences.reminderEnabled}
+          trackColor={{ true: colors.sage, false: colors.grey }}
+          thumbColor={colors.white}
         />
-      ) : null}
+      </View>
       <Text style={styles.group}>{text('profile.data')}</Text>
-      <Row label={text('profile.export')} onPress={() => void data.exportBackup().catch((reason: unknown) => setError(reason instanceof Error ? reason.message : text('profile.exportFailed')))} />
-      <Row label={text('profile.import')} onPress={() => setConfirming('import')} />
+      <Row label={text('profile.export')} disabled />
+      <Row label={text('profile.import')} disabled />
       <Text style={styles.group}>{text('profile.about')}</Text>
       <Card style={styles.about}>
         <Text style={styles.aboutTitle}>{text('profile.version', { version: appConfig.expo.version })}</Text>
@@ -143,13 +108,14 @@ export default function ProfileScreen() {
       </Card>
       {error ? <View style={styles.error}><ErrorText>{error}</ErrorText></View> : null}
       <View style={styles.signOut}>
-        <Button label={text('profile.signOut')} tone="ghost" onPress={() => setConfirming('signout')} />
+        <Button label={text('profile.signOut')} tone="danger" onPress={() => setConfirming('signout')} />
       </View>
       <ConfirmModal
         visible={confirming === 'signout'}
         title={text('profile.signOutTitle')}
         message={text('profile.signOutMessage')}
         confirmLabel={text('profile.signOut')}
+        tone="danger"
         onCancel={() => setConfirming(null)}
         onConfirm={() => {
           setConfirming(null);
@@ -237,7 +203,7 @@ export default function ProfileScreen() {
   );
 }
 
-function Row({ label, value, onPress }: { label: string; value?: string; onPress?: () => void }) {
+function Row({ label, value, onPress, disabled = false }: { label: string; value?: string; onPress?: () => void; disabled?: boolean }) {
   const colors = useColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const content = (
@@ -245,22 +211,16 @@ function Row({ label, value, onPress }: { label: string; value?: string; onPress
       <Text style={styles.rowLabel}>{label}</Text>
       <View style={styles.rowEnd}>
         {value ? <Text style={styles.rowValue}>{value}</Text> : null}
-        {onPress ? <ChevronRight color={colors.muted} size={18} /> : null}
+        {onPress || disabled ? <ChevronRight color={colors.muted} size={18} /> : null}
       </View>
     </>
   );
-  if (!onPress) return <View style={styles.row}>{content}</View>;
+  if (disabled || !onPress) return <View style={[styles.row, disabled && styles.unavailable]}>{content}</View>;
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={styles.row}>
       {content}
     </Pressable>
   );
-}
-
-function clockDate(hour: number, minute: number): Date {
-  const date = new Date();
-  date.setHours(hour, minute, 0, 0);
-  return date;
 }
 
 function createStyles(colors: Palette) {
@@ -273,6 +233,7 @@ function createStyles(colors: Palette) {
   accountEmail: { fontFamily: fonts.regular, fontSize: 13, color: colors.muted, marginTop: 2 },
   group: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ink, marginHorizontal: 20, marginTop: 22, marginBottom: 8 },
   row: { marginHorizontal: 20, marginBottom: 8, backgroundColor: colors.white, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  unavailable: { opacity: 0.45 },
   rowCopy: { flex: 1 },
   rowLabel: { fontFamily: fonts.medium, fontSize: 15, color: colors.ink },
   rowEnd: { flexDirection: 'row', alignItems: 'center', gap: 6 },
