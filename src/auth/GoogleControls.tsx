@@ -1,6 +1,16 @@
 import { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import * as Google from 'expo-auth-session/providers/google';
-import { googleAndroidClientId, googleConfigured, googleIosClientId, googleWebClientId, profileFromIdToken } from './google';
+import {
+  googleAndroidClientId,
+  googleAuthScopes,
+  googleConfigured,
+  googleIosClientId,
+  googleNativeRedirectUri,
+  googleWebClientId,
+  profileFromIdToken,
+} from './google';
+import { clearDriveTokens, saveDriveTokens, tokensFromAuth } from './driveTokens';
 import { useSession } from './session';
 import { Button } from '../components/ui';
 import { PREVIEW_GOOGLE_CLIENT_ID } from '../constants';
@@ -11,10 +21,20 @@ export default function GoogleControls({ onError }: { onError: (message: string 
   const { signIn } = useSession();
   const [busy, setBusy] = useState(false);
   const webClientId = googleConfigured ? googleWebClientId : PREVIEW_GOOGLE_CLIENT_ID;
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+  const androidClientId = googleConfigured ? googleAndroidClientId : webClientId;
+  const iosClientId = googleConfigured ? googleIosClientId : webClientId;
+  const nativeClientId = Platform.OS === 'ios' ? iosClientId : androidClientId;
+  const [request, response, promptAsync] = Google.useAuthRequest({
     webClientId,
-    iosClientId: googleConfigured ? googleIosClientId : webClientId,
-    androidClientId: googleConfigured ? googleAndroidClientId : webClientId,
+    iosClientId,
+    androidClientId,
+    scopes: googleAuthScopes,
+    // Prefer Google's reverse-client redirect so Android OAuth accepts the request.
+    redirectUri: Platform.OS === 'web' ? undefined : googleNativeRedirectUri(nativeClientId),
+    extraParams: {
+      access_type: 'offline',
+      prompt: 'consent',
+    },
   });
 
   useEffect(() => {
@@ -23,14 +43,31 @@ export default function GoogleControls({ onError }: { onError: (message: string 
       return;
     }
     const idToken = response.params.id_token ?? response.authentication?.idToken;
-    if (!idToken) {
+    const accessToken = response.authentication?.accessToken;
+    if (!idToken || !accessToken) {
       onError(text('welcome.googleNoAccount'));
       return;
     }
     setBusy(true);
     try {
       const profile = profileFromIdToken(idToken);
-      void signIn(profile).finally(() => setBusy(false));
+      void (async () => {
+        try {
+          await saveDriveTokens(
+            tokensFromAuth({
+              accessToken,
+              refreshToken: response.authentication?.refreshToken,
+              expiresIn: response.authentication?.expiresIn,
+            }),
+          );
+          await signIn(profile);
+        } catch (reason) {
+          await clearDriveTokens();
+          onError(reason instanceof Error ? reason.message : text('welcome.googleFailed'));
+        } finally {
+          setBusy(false);
+        }
+      })();
     } catch (reason) {
       onError(reason instanceof Error ? reason.message : text('welcome.googleFailed'));
       setBusy(false);

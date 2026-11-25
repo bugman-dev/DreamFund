@@ -1,8 +1,11 @@
 export const SESSION_KEY = 'dreamfund.session';
 export const THEME_KEY = 'dreamfund.theme';
 export const CURRENCY_KEY = 'dreamfund.currency';
+export const DRIVE_TOKENS_KEY = 'dreamfund.drive';
+export const SYNC_META_KEY_PREFIX = 'dreamfund.sync.';
 export const DATABASE_NAME = 'dreamfund.db';
 export const BACKUP_FILE_PREFIX = 'dreamfund-backup-';
+export const CLOUD_BACKUP_NAME = 'dreamfund-backup.json';
 export const BACKUP_VERSION = 1 as const;
 export const REMINDER_KIND = 'dreamfund-reminder';
 

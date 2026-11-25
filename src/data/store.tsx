@@ -7,9 +7,17 @@ import { todayIso } from '../domain/dates';
 import type { GoalRecord, TxRecord } from '../domain/ledger';
 import { buildBackup, createCategory, createGoal, deleteCategory, deleteGoal, editTransaction, ensureUser, importBackup, loadAll, savePreferences, addMoney, transferMoney, updateCategory, updateGoal, withdrawMoney } from '../db/repository';
 import { pickJson, shareJson } from '../db/transferFile';
-import { BACKUP_FILE_PREFIX, DEFAULT_REMINDER_HOUR, DEFAULT_REMINDER_MINUTE, NOTICE_MS } from '../constants';
+import { BACKUP_FILE_PREFIX, DEFAULT_REMINDER_HOUR, DEFAULT_REMINDER_MINUTE, NOTICE_MS, PRESET_IMAGE_PREFIX } from '../constants';
 import { t } from '../locale/messages';
 import { syncReminder } from '../notifications/reminders';
+import { persistGoalImage } from '../sync/goalImages';
+import {
+  probeCloudSync as probeDriveSync,
+  restoreFromCloud as pullDriveBackup,
+  uploadToCloud as pushDriveBackup,
+  type SyncProbe,
+} from '../sync/cloudSync';
+import { loadLastSyncedAt } from '../sync/syncMeta';
 
 type DataValue = {
   ready: boolean;
@@ -35,6 +43,11 @@ type DataValue = {
   setReminder: (enabled: boolean, hour: number, minute: number) => Promise<void>;
   shareBackupFile: () => Promise<void>;
   restoreBackupFromFile: () => Promise<boolean>;
+  lastSyncedAt: string | null;
+  refreshSyncMeta: () => Promise<void>;
+  probeCloudSync: () => Promise<SyncProbe>;
+  uploadToCloud: () => Promise<void>;
+  restoreFromCloud: () => Promise<void>;
 };
 
 const emptyPreferences: Preferences = { reminderEnabled: false, reminderHour: DEFAULT_REMINDER_HOUR, reminderMinute: DEFAULT_REMINDER_MINUTE };
@@ -53,6 +66,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [transactions, setTransactions] = useState<TxRecord[]>([]);
   const [allocated, setAllocated] = useState<Record<string, number>>({});
   const [preferences, setPreferences] = useState<Preferences>(emptyPreferences);
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function flash(message: string) {
@@ -78,6 +92,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setTransactions([]);
       setAllocated({});
       setPreferences(emptyPreferences);
+      setLastSyncedAt(null);
       setReady(true);
       setError(null);
       return;
@@ -85,7 +100,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
     let active = true;
     setReady(false);
     ensureUser(user)
-      .then(() => reload(user.sub))
+      .then(async () => {
+        await reload(user.sub);
+        const synced = await loadLastSyncedAt(user.sub);
+        if (active) setLastSyncedAt(synced);
+      })
       .catch((reason: unknown) => {
         if (active) setError(reason instanceof Error ? reason.message : t('records.openFailed'));
       })
@@ -128,12 +147,32 @@ export function DataProvider({ children }: { children: ReactNode }) {
       deleteCategory: (id) => run((userId) => deleteCategory(userId, id), t('categories.deleted')),
       createGoal: async (input) => {
         if (!userId) throw new Error(t('auth.signIn'));
-        const id = await createGoal(userId, input, currencyRef.current);
+        const pendingImage = input.imageUri && !input.imageUri.startsWith(PRESET_IMAGE_PREFIX) ? input.imageUri : null;
+        const id = await createGoal(
+          userId,
+          {
+            ...input,
+            imageUri: pendingImage ? null : input.imageUri,
+          },
+          currencyRef.current,
+        );
+        if (pendingImage) {
+          const stable = await persistGoalImage(id, pendingImage);
+          await updateGoal(userId, id, { imageUri: stable }, currencyRef.current);
+        }
         await reload(userId);
         flash(t('goal.ready', { name: input.name.trim() }));
         return id;
       },
-      updateGoal: (id, patch) => run((userId) => updateGoal(userId, id, patch, currencyRef.current), t('goal.updated')),
+      updateGoal: (id, patch) =>
+        run(async (uid) => {
+          let next = patch;
+          if (patch.imageUri && !patch.imageUri.startsWith(PRESET_IMAGE_PREFIX)) {
+            const stable = await persistGoalImage(id, patch.imageUri);
+            next = { ...patch, imageUri: stable };
+          }
+          await updateGoal(uid, id, next, currencyRef.current);
+        }, t('goal.updated')),
       deleteGoal: (id) => run((userId) => deleteGoal(userId, id, currencyRef.current), t('goal.deleted')),
       addMoney: (input) => run((userId) => addMoney(userId, input, currencyRef.current), t('money.added')),
       withdrawMoney: (input) => run((userId) => withdrawMoney(userId, input, currencyRef.current), t('money.withdrawn')),
@@ -158,8 +197,33 @@ export function DataProvider({ children }: { children: ReactNode }) {
         flash(t('profile.backupRestored'));
         return true;
       },
+      lastSyncedAt,
+      refreshSyncMeta: async () => {
+        if (!userId) {
+          setLastSyncedAt(null);
+          return;
+        }
+        setLastSyncedAt(await loadLastSyncedAt(userId));
+      },
+      probeCloudSync: async () => {
+        if (!userId) throw new Error(t('auth.signIn'));
+        return probeDriveSync(userId);
+      },
+      uploadToCloud: async () => {
+        if (!userId) throw new Error(t('auth.signIn'));
+        const exportedAt = await pushDriveBackup(userId);
+        setLastSyncedAt(exportedAt);
+        flash(t('profile.syncDone'));
+      },
+      restoreFromCloud: async () => {
+        if (!userId) throw new Error(t('auth.signIn'));
+        const exportedAt = await pullDriveBackup(userId, currencyRef.current);
+        await reload(userId);
+        setLastSyncedAt(exportedAt);
+        flash(t('profile.syncDone'));
+      },
     };
-  }, [allocated, categories, error, goals, notice, preferences, ready, transactions, user]);
+  }, [allocated, categories, error, goals, lastSyncedAt, notice, preferences, ready, transactions, user]);
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }

@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { PREVIEW_USER } from '../constants';
 import { t } from '../locale/messages';
+import { clearDriveTokens } from './driveTokens';
 import { clearSession, loadSession, saveSession } from './storage';
 import type { SessionUser } from './types';
 
@@ -35,10 +37,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       user,
       ready,
       signIn: async (next) => {
+        if (next.sub === PREVIEW_USER.sub) await clearDriveTokens();
         await saveSession(next);
         setUser(next);
       },
       signOut: async () => {
+        await clearDriveTokens();
         await clearSession();
         setUser(null);
       },

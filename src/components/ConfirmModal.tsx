@@ -15,6 +15,8 @@ export function ConfirmModal({
   busy = false,
   onConfirm,
   onCancel,
+  altLabel,
+  onAlt,
 }: {
   visible: boolean;
   title: string;
@@ -24,6 +26,8 @@ export function ConfirmModal({
   busy?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  altLabel?: string;
+  onAlt?: () => void;
 }) {
   const colors = useColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -34,10 +38,15 @@ export function ConfirmModal({
         <Pressable style={styles.card} onPress={() => undefined}>
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
-          <View style={styles.actions}>
+          <View style={[styles.actions, altLabel ? styles.actionsWrap : null]}>
             <View style={styles.action}>
               <Button label={text('common.cancel')} tone="ghost" onPress={onCancel} disabled={busy} />
             </View>
+            {altLabel && onAlt ? (
+              <View style={styles.action}>
+                <Button label={altLabel} tone="ghost" onPress={onAlt} disabled={busy} />
+              </View>
+            ) : null}
             <View style={styles.action}>
               <Button label={confirmLabel} tone={tone} onPress={onConfirm} disabled={busy} />
             </View>
@@ -55,6 +64,7 @@ function createStyles(colors: Palette) {
   title: { fontFamily: fonts.semibold, fontSize: 20, color: colors.ink },
   message: { fontFamily: fonts.regular, fontSize: 15, color: colors.muted, lineHeight: 22, marginTop: 8, marginBottom: 18 },
   actions: { flexDirection: 'row', gap: 10 },
-  action: { flex: 1 },
+  actionsWrap: { flexWrap: 'wrap' },
+  action: { flex: 1, minWidth: 100 },
   });
 }
