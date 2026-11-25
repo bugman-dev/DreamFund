@@ -38,11 +38,10 @@ export default function WelcomeScreen() {
         <Suspense fallback={null}>
           <GoogleControls onError={setError} />
         </Suspense>
-        {!googleConfigured ? (
-          <Pressable accessibilityRole="button" onPress={() => void signIn(previewUser)} style={styles.preview}>
-            <Text style={styles.previewText}>{text('welcome.guest')}</Text>
-          </Pressable>
-        ) : null}
+        {googleConfigured ? <Text style={styles.hint}>{text('welcome.googleHint')}</Text> : null}
+        <Pressable accessibilityRole="button" onPress={() => void signIn(previewUser)} style={styles.preview}>
+          <Text style={styles.previewText}>{text('welcome.guest')}</Text>
+        </Pressable>
         {error ? <Text style={styles.error}>{error}</Text> : null}
       </View>
     </View>
@@ -58,6 +57,7 @@ function createStyles(colors: Palette) {
   wordmark: { fontFamily: fonts.bold, fontSize: 42, color: colors.onForest },
   quote: { fontFamily: fonts.quote, fontSize: 20, color: colors.statusBar === 'light' ? colors.onForest : colors.ivory, marginTop: 12, textAlign: 'center' },
   footer: { paddingHorizontal: 20, gap: 12 },
+  hint: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18, color: colors.muted, textAlign: 'center' },
   preview: { alignItems: 'center', paddingVertical: 8 },
   previewText: { fontFamily: fonts.semibold, fontSize: 15, color: colors.forest },
   error: { fontFamily: fonts.medium, fontSize: 13, color: colors.rose, textAlign: 'center' },

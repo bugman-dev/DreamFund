@@ -36,6 +36,8 @@ export type BackupFile = {
   transactions: TxRecord[];
   audits: AuditRecord[];
   preferences: Preferences;
+  /** Goal id → filename stored beside this JSON in Drive appDataFolder. */
+  imageFiles?: Record<string, string>;
 };
 
 export type RestoredBackup = {
