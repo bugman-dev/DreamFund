@@ -227,10 +227,10 @@
   "sync.uploadFailed": "The cloud backup could not be uploaded.",
   "sync.noCloud": "No cloud backup was found.",
   "sync.never": "Never",
-  "sync.choiceTitle": "Cloud backup is newer",
-  "sync.choiceMessage": "The cloud copy from {when} is newer than this device. Restore it, or upload this device and replace the cloud copy.",
+  "sync.choiceTitle": "A newer cloud backup was found",
+  "sync.choiceMessage": "Your cloud backup from {when} is newer than the data on this device. Choose which version you'd like to keep",
   "sync.restore": "Restore from cloud",
-  "sync.upload": "Upload this device",
+  "sync.upload": "Replace cloud backup",
 
   "categories.title": "Categories",
   "categories.edit": "Edit",

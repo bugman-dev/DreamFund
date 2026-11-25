@@ -13,6 +13,7 @@ export function ConfirmModal({
   confirmLabel,
   tone = 'primary',
   busy = false,
+  showCancel = true,
   onConfirm,
   onCancel,
   altLabel,
@@ -24,6 +25,7 @@ export function ConfirmModal({
   confirmLabel: string;
   tone?: 'primary' | 'danger';
   busy?: boolean;
+  showCancel?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
   altLabel?: string;
@@ -39,9 +41,11 @@ export function ConfirmModal({
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
           <View style={[styles.actions, altLabel ? styles.actionsWrap : null]}>
-            <View style={styles.action}>
-              <Button label={text('common.cancel')} tone="ghost" onPress={onCancel} disabled={busy} />
-            </View>
+            {showCancel ? (
+              <View style={styles.action}>
+                <Button label={text('common.cancel')} tone="ghost" onPress={onCancel} disabled={busy} />
+              </View>
+            ) : null}
             {altLabel && onAlt ? (
               <View style={styles.action}>
                 <Button label={altLabel} tone="ghost" onPress={onAlt} disabled={busy} />

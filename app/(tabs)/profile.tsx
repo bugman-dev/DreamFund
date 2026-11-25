@@ -166,6 +166,7 @@ export default function ProfileScreen() {
         confirmLabel={text('sync.restore')}
         altLabel={text('sync.upload')}
         busy={syncing}
+        showCancel={false}
         onCancel={() => setCloudChoice(null)}
         onAlt={() => {
           setCloudChoice(null);
