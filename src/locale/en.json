@@ -8,6 +8,10 @@
   "welcome.googleFailed": "Google sign-in did not complete. Try again.",
   "welcome.googleNoAccount": "Google did not return an account.",
   "welcome.googleHint": "Google keeps your goals in your Google account so you can restore them on a new device.",
+  "oauth.welcome": "Welcome, {name}!",
+  "oauth.body": "Continue your journey towards your dreams.",
+  "oauth.continue": "Start chasing dreams",
+  "oauth.loading": "One moment please...",
 
   "home.goodMorning": "Good Morning",
   "home.goodAfternoon": "Good Afternoon",

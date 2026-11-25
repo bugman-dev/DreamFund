@@ -39,11 +39,9 @@ export default function WelcomeScreen() {
           <GoogleControls onError={setError} />
         </Suspense>
         {googleConfigured ? <Text style={styles.hint}>{text('welcome.googleHint')}</Text> : null}
-        {!googleConfigured ? (
-          <Pressable accessibilityRole="button" onPress={() => void signIn(previewUser)} style={styles.preview}>
-            <Text style={styles.previewText}>{text('welcome.guest')}</Text>
-          </Pressable>
-        ) : null}
+        <Pressable accessibilityRole="button" onPress={() => void signIn(previewUser)} style={styles.preview}>
+          <Text style={styles.previewText}>{text('welcome.guest')}</Text>
+        </Pressable>
         {error ? <Text style={styles.error}>{error}</Text> : null}
       </View>
     </View>
