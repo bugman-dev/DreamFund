@@ -158,9 +158,7 @@
   "insights.saved": "Saved",
   "insights.goals": "Goals",
   "insights.section": "Allocation by category",
-  "insights.caption": "Saved is the net added in this period. The chart is what is set aside now.",
   "insights.emptySplit": "Add money to see the split.",
-  "insights.allocated": "Allocated",
 
   "tx.title": "Transactions",
   "tx.emptyTitle": "No transactions yet",

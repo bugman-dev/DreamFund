@@ -64,9 +64,8 @@ export default function InsightsScreen() {
             </View>
           </View>
           <Text style={styles.section}>{text('insights.section')}</Text>
-          <Text style={styles.caption}>{text('insights.caption')}</Text>
           <View style={styles.chartCard}>
-            <Donut slices={slices} total={books.saved} caption={text('insights.allocated')} />
+            <Donut slices={slices} total={books.saved} caption={text('insights.saved')} />
             <View style={styles.legend}>
               {slices.length === 0 ? <Text style={styles.caption}>{text('insights.emptySplit')}</Text> : null}
               {slices.map((slice) => (
