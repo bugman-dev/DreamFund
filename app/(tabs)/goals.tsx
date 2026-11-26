@@ -81,7 +81,7 @@ export default function GoalsScreen() {
 
 function createStyles(colors: Palette) {
   return StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingRight: 12 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingRight: 12, paddingBottom: 16 },
   searchButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
   search: {
     marginHorizontal: 20,
