@@ -63,6 +63,6 @@ function ThemedShell({ fontsReady }: { fontsReady: boolean }) {
 }
 
 function NoticeHost() {
-  const { notice } = useData();
-  return <NoticeBanner message={notice} />;
+  const { notice, clearNotice } = useData();
+  return <NoticeBanner notice={notice} onDismiss={clearNotice} />;
 }

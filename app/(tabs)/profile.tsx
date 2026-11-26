@@ -53,6 +53,15 @@ export default function ProfileScreen() {
       ? text('profile.syncLast', { when: formatSyncTime(data.lastSyncedAt) })
       : text('profile.syncNever');
 
+  function flashSyncError(reason: unknown) {
+    const detail = reason instanceof Error ? reason.message : text('profile.syncFailedBody');
+    data.notify({
+      tone: 'error',
+      title: text('profile.syncFailed'),
+      body: detail === text('profile.syncFailed') ? text('profile.syncFailedBody') : detail,
+    });
+  }
+
   async function runSyncUpload() {
     setSyncing(true);
     setSyncError(null);
@@ -60,6 +69,7 @@ export default function ProfileScreen() {
       await data.uploadToCloud();
     } catch (reason) {
       setSyncError(reason instanceof Error ? reason.message : text('profile.syncFailed'));
+      flashSyncError(reason);
     } finally {
       setSyncing(false);
     }
@@ -72,6 +82,7 @@ export default function ProfileScreen() {
       await data.restoreFromCloud();
     } catch (reason) {
       setSyncError(reason instanceof Error ? reason.message : text('profile.syncFailed'));
+      flashSyncError(reason);
     } finally {
       setSyncing(false);
     }
@@ -91,6 +102,7 @@ export default function ProfileScreen() {
       await data.uploadToCloud();
     } catch (reason) {
       setSyncError(reason instanceof Error ? reason.message : text('profile.syncFailed'));
+      flashSyncError(reason);
     } finally {
       setSyncing(false);
     }

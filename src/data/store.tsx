@@ -8,6 +8,7 @@ import type { GoalRecord, TxRecord } from '../domain/ledger';
 import { buildBackup, createCategory, createGoal, deleteCategory, deleteGoal, editTransaction, ensureUser, importBackup, loadAll, savePreferences, addMoney, transferMoney, updateCategory, updateGoal, withdrawMoney } from '../db/repository';
 import { pickJson, shareJson } from '../db/transferFile';
 import { BACKUP_FILE_PREFIX, DEFAULT_REMINDER_HOUR, DEFAULT_REMINDER_MINUTE, NOTICE_MS, PRESET_IMAGE_PREFIX } from '../constants';
+import type { AppNotice, NoticeTone } from '../domain/notice';
 import { t } from '../locale/messages';
 import { syncReminder } from '../notifications/reminders';
 import { persistGoalImage } from '../sync/goalImages';
@@ -22,7 +23,7 @@ import { loadLastSyncedAt } from '../sync/syncMeta';
 type DataValue = {
   ready: boolean;
   error: string | null;
-  notice: string | null;
+  notice: AppNotice | null;
   categories: Category[];
   goals: GoalRecord[];
   transactions: TxRecord[];
@@ -30,6 +31,7 @@ type DataValue = {
   preferences: Preferences;
   refresh: () => Promise<void>;
   clearNotice: () => void;
+  notify: (notice: AppNotice) => void;
   createCategory: (name: string, icon: string) => Promise<Category>;
   updateCategory: (id: string, name: string, icon: string) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
@@ -60,7 +62,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   currencyRef.current = currencyId;
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<AppNotice | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [goals, setGoals] = useState<GoalRecord[]>([]);
   const [transactions, setTransactions] = useState<TxRecord[]>([]);
@@ -69,10 +71,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  function flash(message: string) {
+  function flash(next: AppNotice) {
     if (noticeTimer.current) clearTimeout(noticeTimer.current);
-    setNotice(message);
+    setNotice(next);
     noticeTimer.current = setTimeout(() => setNotice(null), NOTICE_MS);
+  }
+
+  function flashTone(tone: NoticeTone, title: string, body?: string) {
+    flash({ tone, title, body });
   }
 
   async function reload(userId: string) {
@@ -118,11 +124,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<DataValue>(() => {
     const userId = user?.sub;
-    async function run(task: (id: string) => Promise<void>, message?: string) {
+    async function run(task: (id: string) => Promise<void>, notice?: AppNotice) {
       if (!userId) throw new Error(t('auth.signIn'));
       await task(userId);
       await reload(userId);
-      if (message) flash(message);
+      if (notice) flash(notice);
     }
     return {
       ready,
@@ -137,14 +143,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if (userId) await reload(userId);
       },
       clearNotice: () => setNotice(null),
+      notify: flash,
       createCategory: async (name, icon) => {
         if (!userId) throw new Error(t('auth.signIn'));
         const category = await createCategory(userId, name, icon);
         await reload(userId);
         return category;
       },
-      updateCategory: (id, name, icon) => run((userId) => updateCategory(userId, id, name, icon), t('categories.updated')),
-      deleteCategory: (id) => run((userId) => deleteCategory(userId, id), t('categories.deleted')),
+      updateCategory: (id, name, icon) =>
+        run((userId) => updateCategory(userId, id, name, icon), { tone: 'success', title: t('categories.updated') }),
+      deleteCategory: (id) =>
+        run((userId) => deleteCategory(userId, id), { tone: 'success', title: t('categories.deleted') }),
       createGoal: async (input) => {
         if (!userId) throw new Error(t('auth.signIn'));
         const pendingImage = input.imageUri && !input.imageUri.startsWith(PRESET_IMAGE_PREFIX) ? input.imageUri : null;
@@ -161,7 +170,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           await updateGoal(userId, id, { imageUri: stable }, currencyRef.current);
         }
         await reload(userId);
-        flash(t('goal.ready', { name: input.name.trim() }));
+        flashTone('success', t('goal.ready', { name: input.name.trim() }));
         return id;
       },
       updateGoal: (id, patch) =>
@@ -172,21 +181,41 @@ export function DataProvider({ children }: { children: ReactNode }) {
             next = { ...patch, imageUri: stable };
           }
           await updateGoal(uid, id, next, currencyRef.current);
-        }, t('goal.updated')),
-      deleteGoal: (id) => run((userId) => deleteGoal(userId, id, currencyRef.current), t('goal.deleted')),
-      addMoney: (input) => run((userId) => addMoney(userId, input, currencyRef.current), t('money.added')),
-      withdrawMoney: (input) => run((userId) => withdrawMoney(userId, input, currencyRef.current), t('money.withdrawn')),
-      transferMoney: (input) => run((userId) => transferMoney(userId, input, currencyRef.current), t('money.transferred')),
-      editTransaction: (input) => run((userId) => editTransaction(userId, input, currencyRef.current), t('tx.updated')),
+        }, { tone: 'success', title: t('goal.updated') }),
+      deleteGoal: (id) =>
+        run((userId) => deleteGoal(userId, id, currencyRef.current), { tone: 'success', title: t('goal.deleted') }),
+      addMoney: (input) =>
+        run((userId) => addMoney(userId, input, currencyRef.current), {
+          tone: 'success',
+          title: t('money.added'),
+          body: t('money.addedBody'),
+        }),
+      withdrawMoney: (input) =>
+        run((userId) => withdrawMoney(userId, input, currencyRef.current), {
+          tone: 'success',
+          title: t('money.withdrawn'),
+          body: t('money.withdrawnBody'),
+        }),
+      transferMoney: (input) =>
+        run((userId) => transferMoney(userId, input, currencyRef.current), {
+          tone: 'success',
+          title: t('money.transferred'),
+          body: t('money.transferredBody'),
+        }),
+      editTransaction: (input) =>
+        run((userId) => editTransaction(userId, input, currencyRef.current), { tone: 'success', title: t('tx.updated') }),
       setReminder: async (enabled, hour, minute) => {
         const next = { reminderEnabled: enabled, reminderHour: hour, reminderMinute: minute };
         await syncReminder(next);
-        await run((userId) => savePreferences(userId, next), enabled ? t('profile.reminderSaved') : t('profile.reminderCleared'));
+        await run(
+          (userId) => savePreferences(userId, next),
+          { tone: 'info', title: enabled ? t('profile.reminderSaved') : t('profile.reminderCleared') },
+        );
       },
       shareBackupFile: async () => {
         if (!userId) throw new Error(t('auth.signIn'));
         await publishBackupFile(userId);
-        flash(t('profile.backupReady'));
+        flashTone('info', t('profile.backupReady'), t('profile.backupReadyBody'));
       },
       restoreBackupFromFile: async () => {
         if (!userId) throw new Error(t('auth.signIn'));
@@ -194,7 +223,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if (payload == null) return false;
         await importBackup(userId, payload, currencyRef.current);
         await reload(userId);
-        flash(t('profile.backupRestored'));
+        flashTone('success', t('profile.backupRestored'), t('profile.backupRestoredBody'));
         return true;
       },
       lastSyncedAt,
@@ -213,14 +242,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if (!userId) throw new Error(t('auth.signIn'));
         const exportedAt = await pushDriveBackup(userId);
         setLastSyncedAt(exportedAt);
-        flash(t('profile.syncDone'));
+        flashTone('info', t('profile.syncDone'), t('profile.syncDoneBody'));
       },
       restoreFromCloud: async () => {
         if (!userId) throw new Error(t('auth.signIn'));
         const exportedAt = await pullDriveBackup(userId, currencyRef.current);
         await reload(userId);
         setLastSyncedAt(exportedAt);
-        flash(t('profile.syncDone'));
+        flashTone('info', t('profile.syncDone'), t('profile.syncDoneBody'));
       },
     };
   }, [allocated, categories, error, goals, lastSyncedAt, notice, preferences, ready, transactions, user]);

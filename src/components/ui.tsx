@@ -1,8 +1,21 @@
-import { ChevronLeft } from 'lucide-react-native';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
-import { useMemo, type ReactNode } from 'react';
+import { Check, ChevronLeft, CircleAlert, Info, TriangleAlert, X } from 'lucide-react-native';
+import {
+  ActivityIndicator,
+  Animated,
+  Easing,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
+import { useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { PERCENT_MAX } from '../constants';
+import { NOTICE_MS, PERCENT_MAX } from '../constants';
+import type { AppNotice, NoticeTone } from '../domain/notice';
 import { useText } from '../locale';
 import type { Palette } from '../theme/palettes';
 import { useColors } from '../theme/Theme';
@@ -219,15 +232,126 @@ export function ErrorText({ children }: { children: string }) {
   return <Text style={styles.error}>{children}</Text>;
 }
 
-export function NoticeBanner({ message }: { message: string | null }) {
+export function NoticeBanner({
+  notice,
+  onDismiss,
+}: {
+  notice: AppNotice | null;
+  onDismiss: () => void;
+}) {
+  const colors = useColors();
   const styles = useUiStyles();
+  const text = useText();
   const insets = useSafeAreaInsets();
-  if (!message) return null;
+  const expand = useRef(new Animated.Value(0)).current;
+  const progress = useRef(new Animated.Value(1)).current;
+  const tone = notice ? noticeTone(colors, notice.tone) : null;
+  const Icon = notice ? NOTICE_ICONS[notice.tone] : Check;
+
+  useEffect(() => {
+    if (!notice) return;
+    expand.setValue(0);
+    progress.setValue(1);
+    Animated.timing(expand, {
+      toValue: 1,
+      duration: 320,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+    Animated.timing(progress, {
+      toValue: 0,
+      duration: NOTICE_MS,
+      easing: Easing.linear,
+      useNativeDriver: true,
+    }).start();
+  }, [notice, expand, progress]);
+
+  if (!notice || !tone) return null;
+
   return (
-    <View pointerEvents="none" style={[styles.notice, { top: insets.top + 8 }]}>
-      <Text style={styles.noticeText}>{message}</Text>
-    </View>
+    <Animated.View
+      pointerEvents="box-none"
+      style={[
+        styles.notice,
+        {
+          top: insets.top + 8,
+          backgroundColor: tone.surface,
+          opacity: expand,
+          transform: [{ scaleX: expand }, { scaleY: expand }],
+        },
+      ]}
+    >
+      <View style={styles.noticeRow}>
+        <View style={[styles.noticeIconWrap, { backgroundColor: tone.iconBg }]}>
+          <Icon color={tone.accent} size={18} strokeWidth={2.4} />
+        </View>
+        <View style={styles.noticeCopy}>
+          <Text style={styles.noticeTitle}>{notice.title}</Text>
+          {notice.body ? <Text style={styles.noticeBody}>{notice.body}</Text> : null}
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={text('common.dismissNotice')}
+          hitSlop={10}
+          onPress={onDismiss}
+          style={styles.noticeDismiss}
+        >
+          <X color={colors.muted} size={18} strokeWidth={2} />
+        </Pressable>
+      </View>
+      <View style={[styles.noticeTrack, { backgroundColor: tone.track }]}>
+        <Animated.View
+          style={[
+            styles.noticeProgress,
+            {
+              backgroundColor: tone.accent,
+              transform: [{ scaleX: progress }],
+            },
+          ]}
+        />
+      </View>
+    </Animated.View>
   );
+}
+
+const NOTICE_ICONS = {
+  success: Check,
+  error: CircleAlert,
+  warning: TriangleAlert,
+  info: Info,
+} as const;
+
+function noticeTone(colors: Palette, tone: NoticeTone) {
+  switch (tone) {
+    case 'success':
+      return {
+        surface: colors.paleSage,
+        iconBg: '#C9DEC9',
+        accent: colors.forest,
+        track: '#B7CDB7',
+      };
+    case 'error':
+      return {
+        surface: colors.roseSoft,
+        iconBg: '#F0CFCA',
+        accent: colors.rose,
+        track: '#E5B8B2',
+      };
+    case 'warning':
+      return {
+        surface: '#F8EBDA',
+        iconBg: '#F5D7B0',
+        accent: colors.amber,
+        track: '#E8D0AE',
+      };
+    case 'info':
+      return {
+        surface: '#E8EEF2',
+        iconBg: '#D0DBE3',
+        accent: colors.sky,
+        track: '#C5D2DC',
+      };
+  }
 }
 
 function useUiStyles() {
@@ -293,15 +417,40 @@ function createUiStyles(colors: Palette) {
   error: { fontFamily: fonts.medium, fontSize: 13, color: colors.rose, marginTop: 6 },
   notice: {
     position: 'absolute',
-    left: 20,
-    right: 20,
-    backgroundColor: colors.paleSage,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    left: 16,
+    right: 16,
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingTop: 14,
+    paddingBottom: 14,
+    overflow: 'hidden',
     zIndex: 20,
   },
-  noticeText: { fontFamily: fonts.medium, fontSize: 14, color: colors.forest, textAlign: 'center' },
+  noticeRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  noticeIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noticeCopy: { flex: 1, gap: 2, paddingTop: 1 },
+  noticeTitle: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink, lineHeight: 20 },
+  noticeBody: { fontFamily: fonts.regular, fontSize: 13, color: colors.muted, lineHeight: 18 },
+  noticeDismiss: { padding: 2, marginTop: 2 },
+  noticeTrack: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 2,
+    overflow: 'hidden',
+  },
+  noticeProgress: {
+    height: 2,
+    width: '100%',
+    transformOrigin: 'left center',
+  },
   });
 }
 
