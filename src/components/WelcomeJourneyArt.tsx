@@ -1,9 +1,15 @@
-import { StyleSheet, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
-import { useColors } from '../theme/Theme';
+import { StyleSheet, View } from "react-native";
+import Svg, { Path } from "react-native-svg";
+import { useColors } from "../theme/Theme";
 
 /** Soft rolling hills pinned to the bottom of the welcome screen. */
-export function WelcomeHills({ width, height = 168 }: { width: number; height?: number }) {
+export function WelcomeHills({
+  width,
+  height = 168,
+}: {
+  width: number;
+  height?: number;
+}) {
   const colors = useColors();
   return (
     <View pointerEvents="none" style={[styles.hills, { width, height }]}>
@@ -35,7 +41,7 @@ export function WelcomeHills({ width, height = 168 }: { width: number; height?: 
 
 const styles = StyleSheet.create({
   hills: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
     bottom: 0,
   },

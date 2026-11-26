@@ -1,4 +1,4 @@
-import { ICON_NAMES } from '../constants';
+import { ICON_NAMES } from "../constants";
 
 export { ICON_NAMES };
 

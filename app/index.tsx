@@ -1,6 +1,6 @@
-import { Redirect } from 'expo-router';
-import { useSession } from '../src/auth/session';
-import { LoadingScreen } from '../src/components/ui';
+import { Redirect } from "expo-router";
+import { useSession } from "../src/auth/session";
+import { LoadingScreen } from "../src/components/ui";
 
 export default function Index() {
   const { user, ready } = useSession();

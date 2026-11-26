@@ -1,11 +1,11 @@
-import { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { ICON_NAMES, type IconName } from '../domain/icons';
-import { useText } from '../locale';
-import type { Palette } from '../theme/palettes';
-import { useColors } from '../theme/Theme';
-import { fonts } from '../theme/type';
-import { AppIcon } from './icons';
+import { useMemo } from "react";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ICON_NAMES, type IconName } from "../domain/icons";
+import { useText } from "../locale";
+import type { Palette } from "../theme/palettes";
+import { useColors } from "../theme/Theme";
+import { fonts } from "../theme/type";
+import { AppIcon } from "./icons";
 
 export function CategoryDraftFields({
   name,
@@ -28,11 +28,11 @@ export function CategoryDraftFields({
       <TextInput
         value={name}
         onChangeText={onChangeName}
-        placeholder={text('category.namePlaceholder')}
+        placeholder={text("category.namePlaceholder")}
         placeholderTextColor={colors.muted}
         style={styles.input}
       />
-      <Text style={styles.choose}>{text('category.chooseIcon')}</Text>
+      <Text style={styles.choose}>{text("category.chooseIcon")}</Text>
       <View style={styles.icons}>
         {ICON_NAMES.map((item) => {
           const selected = icon === item;
@@ -44,7 +44,11 @@ export function CategoryDraftFields({
               onPress={() => onChangeIcon(item)}
               style={[styles.choice, selected && styles.choiceSelected]}
             >
-              <AppIcon name={item} size={18} color={selected ? colors.onForest : colors.forest} />
+              <AppIcon
+                name={item}
+                size={18}
+                color={selected ? colors.onForest : colors.forest}
+              />
             </Pressable>
           );
         })}
@@ -69,8 +73,15 @@ function createStyles(colors: Palette) {
       color: colors.ink,
     },
     choose: { fontFamily: fonts.medium, fontSize: 13, color: colors.muted },
-    icons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    choice: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.paleSage, alignItems: 'center', justifyContent: 'center' },
+    icons: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+    choice: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: colors.paleSage,
+      alignItems: "center",
+      justifyContent: "center",
+    },
     choiceSelected: { backgroundColor: colors.forest },
     error: { fontFamily: fonts.medium, fontSize: 13, color: colors.rose },
   });

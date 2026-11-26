@@ -1,11 +1,11 @@
-import { useMemo } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
-import { formatDay } from '../domain/dates';
-import { useText } from '../locale';
-import type { Palette } from '../theme/palettes';
-import { useColors } from '../theme/Theme';
-import { fonts } from '../theme/type';
-import { Field } from './ui';
+import { useMemo } from "react";
+import { Pressable, StyleSheet, Text } from "react-native";
+import { formatDay } from "../domain/dates";
+import { useText } from "../locale";
+import type { Palette } from "../theme/palettes";
+import { useColors } from "../theme/Theme";
+import { fonts } from "../theme/type";
+import { Field } from "./ui";
 
 export function DateField({
   label,
@@ -32,22 +32,26 @@ export function DateField({
         max={maximumDate}
         onChange={(event) => onChange(event.target.value)}
         style={{
-          width: '100%',
-          boxSizing: 'border-box',
+          width: "100%",
+          boxSizing: "border-box",
           minHeight: 52,
           borderRadius: 14,
           border: `1px solid ${colors.grey}`,
           background: colors.white,
-          padding: '0 14px',
-          fontFamily: 'DM Sans, sans-serif',
+          padding: "0 14px",
+          fontFamily: "DM Sans, sans-serif",
           fontSize: 16,
           color: value ? colors.ink : colors.muted,
         }}
       />
-      {value ? <Text style={styles.hint}>{formatDay(value)}</Text> : optional ? <Text style={styles.hint}>{text('common.optional')}</Text> : null}
+      {value ? (
+        <Text style={styles.hint}>{formatDay(value)}</Text>
+      ) : optional ? (
+        <Text style={styles.hint}>{text("common.optional")}</Text>
+      ) : null}
       {optional && value ? (
-        <Pressable accessibilityRole="button" onPress={() => onChange('')}>
-          <Text style={styles.clear}>{text('common.clearDate')}</Text>
+        <Pressable accessibilityRole="button" onPress={() => onChange("")}>
+          <Text style={styles.clear}>{text("common.clearDate")}</Text>
         </Pressable>
       ) : null}
     </Field>
@@ -56,7 +60,17 @@ export function DateField({
 
 function createStyles(colors: Palette) {
   return StyleSheet.create({
-    hint: { fontFamily: fonts.regular, fontSize: 13, color: colors.muted, marginTop: 6 },
-    clear: { fontFamily: fonts.medium, fontSize: 13, color: colors.sage, marginTop: 8 },
+    hint: {
+      fontFamily: fonts.regular,
+      fontSize: 13,
+      color: colors.muted,
+      marginTop: 6,
+    },
+    clear: {
+      fontFamily: fonts.medium,
+      fontSize: 13,
+      color: colors.sage,
+      marginTop: 8,
+    },
   });
 }

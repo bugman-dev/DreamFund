@@ -34,8 +34,8 @@ import {
   Wallet,
   WashingMachine,
   type LucideIcon,
-} from 'lucide-react-native';
-import { type IconName } from '../domain/icons';
+} from "lucide-react-native";
+import { type IconName } from "../domain/icons";
 
 const ICONS: Record<IconName, LucideIcon> = {
   House,

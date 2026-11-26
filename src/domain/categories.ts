@@ -5,4 +5,3 @@ export type Category = {
   isPreset: boolean;
   sortOrder: number;
 };
-

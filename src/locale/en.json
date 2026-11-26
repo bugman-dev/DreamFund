@@ -12,7 +12,6 @@
   "oauth.body": "Continue your journey towards your dreams.",
   "oauth.continue": "Start chasing dreams",
   "oauth.loading": "One moment please...",
-
   "home.goodMorning": "Good Morning",
   "home.goodAfternoon": "Good Afternoon",
   "home.goodEvening": "Good Evening",
@@ -30,7 +29,6 @@
   "home.emptyTitle": "Start your first goal",
   "home.emptyBody": "Dream Fund keeps one savings picture across the things you are planning. Money stays in your real account.",
   "home.createGoal": "Create a goal",
-
   "common.cancel": "Cancel",
   "common.close": "Close",
   "common.dismissNotice": "Dismiss",
@@ -49,24 +47,20 @@
   "common.passed": "Passed",
   "common.remaining": "{amount} remaining",
   "common.create": "Create",
-
   "tabs.home": "Home",
   "tabs.goals": "Goals",
   "tabs.transactions": "Transactions",
   "tabs.profile": "Profile",
-
   "actions.prompt": "What would you like to do?",
   "actions.addMoney": "Add Money",
   "actions.withdraw": "Withdraw",
   "actions.newGoal": "New Goal",
   "actions.transfer": "Transfer",
-
   "goals.title": "Goals",
   "goals.search": "Search goals",
   "goals.emptyAll": "No goals yet",
   "goals.emptyCategory": "No {category} goals",
   "goals.emptyBody": "Finished goals stay in their category, so this list is only empty when nothing has been saved here.",
-
   "goal.createTitle": "Create New Goal",
   "goal.createSubmit": "Create Goal",
   "goal.editTitle": "Edit Goal",
@@ -108,7 +102,6 @@
   "goal.deleted": "Goal deleted.",
   "goal.deleteFailed": "The goal could not be deleted.",
   "goal.actions": "Goal actions",
-
   "money.addTitle": "Add Money to Goal",
   "money.withdrawTitle": "Withdraw from Goal",
   "money.transferTitle": "Transfer Between Goals",
@@ -148,7 +141,6 @@
   "money.withdrawnBody": "The amount was moved out of this goal.",
   "money.transferred": "Transfer recorded",
   "money.transferredBody": "Money moved between your goals.",
-
   "insights.title": "Insights",
   "insights.month": "This Month",
   "insights.year": "This Year",
@@ -159,7 +151,6 @@
   "insights.goals": "Goals",
   "insights.section": "Allocation by category",
   "insights.emptySplit": "Add money to see the split.",
-
   "tx.title": "Transactions",
   "tx.emptyTitle": "No transactions yet",
   "tx.emptyBody": "Additions, withdrawals, and transfers will appear here in the order they happened.",
@@ -178,7 +169,6 @@
   "tx.confirmMessage": "The balance will be recalculated. The previous amount was {amount}.",
   "tx.updated": "Transaction updated.",
   "tx.updateFailed": "The transaction could not be updated.",
-
   "profile.googleAccount": "Google account",
   "profile.title": "Profile",
   "profile.preferences": "Preferences",
@@ -237,7 +227,6 @@
   "sync.choiceMessage": "Your cloud backup from {when} is newer than the data on this device. Choose which version you'd like to keep",
   "sync.restore": "Restore from cloud",
   "sync.upload": "Replace cloud backup",
-
   "categories.title": "Categories",
   "categories.edit": "Edit",
   "categories.add": "Add category",
@@ -250,7 +239,6 @@
   "categories.deleteFailed": "The category could not be deleted.",
   "categories.updated": "Category updated.",
   "categories.deleted": "Category deleted.",
-
   "category.select": "Select Category",
   "category.search": "Search category",
   "category.empty": "No categories available",
@@ -259,11 +247,9 @@
   "category.chooseIcon": "Choose icon",
   "category.addNamed": "Add \"{name}\"",
   "category.createFailed": "The category could not be created.",
-
   "notFound.title": "That screen is not here",
   "notFound.body": "Head back to your savings.",
   "notFound.home": "Go home",
-
   "records.openFailed": "Dream Fund could not open your records.",
   "records.couldNotOpen": "Records could not be opened",
   "records.tryAgain": "Try again",
@@ -271,7 +257,6 @@
   "auth.signIn": "Sign in to continue.",
   "auth.unavailable": "Session is unavailable.",
   "auth.member": "Member",
-
   "present.category": "Category",
   "present.goal": "Goal",
   "present.deletedGoal": "Deleted goal",
@@ -279,13 +264,11 @@
   "present.withdrawn": "Withdrawn from {goal}",
   "present.transfer": "From {goal} to {counter}",
   "present.from": "From {goal}",
-
   "reminder.title": "Dream Fund",
   "reminder.body": "Set aside something for your goals today.",
   "reminder.denied": "Notifications are turned off for Dream Fund.",
   "share.dialog": "Export Dream Fund backup",
   "share.unavailable": "Sharing is not available on this device.",
-
   "error.categoryName": "Enter a category name up to 40 characters.",
   "error.chooseIcon": "Choose an icon.",
   "error.categoryExists": "A category with that name already exists.",
@@ -293,7 +276,6 @@
   "error.categoryInUse": "This category is still used by a goal. Reassign those goals before deleting it.",
   "error.reconcile": "The ledger could not be reconciled.",
   "error.goalSave": "A goal could not be saved.",
-
   "backup.notFile": "This backup is not a Dream Fund file.",
   "backup.missing": "This backup is missing its records.",
   "backup.category": "A category in the backup could not be read.",
@@ -310,7 +292,6 @@
   "backup.audit": "An audit entry in the backup could not be read.",
   "backup.auditTx": "An audit entry points at a missing transaction.",
   "backup.auditValues": "An audit entry is missing its amounts.",
-
   "ledger.goalMissing": "That goal no longer exists.",
   "ledger.addFull": "{name} has already reached its target. Raise the target before adding more.",
   "ledger.addRoom": "You can add up to {amount} before {name} reaches its target.",

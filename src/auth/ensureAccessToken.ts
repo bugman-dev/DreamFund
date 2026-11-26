@@ -1,17 +1,23 @@
-import * as AuthSession from 'expo-auth-session';
-import { t } from '../locale/messages';
-import { googleTokenEndpoint, googleWebClientId } from './google';
-import { clearDriveTokens, loadDriveTokens, saveDriveTokens, tokensFromAuth } from './driveTokens';
+import * as AuthSession from "expo-auth-session";
+import { t } from "../locale/messages";
+import { googleTokenEndpoint, googleWebClientId } from "./google";
+import {
+  clearDriveTokens,
+  loadDriveTokens,
+  saveDriveTokens,
+  tokensFromAuth,
+} from "./driveTokens";
 
 const FRESH_MARGIN_MS = 60_000;
 
 export async function ensureAccessToken(): Promise<string> {
   const stored = await loadDriveTokens();
-  if (!stored) throw new Error(t('sync.reauth'));
-  if (stored.expiresAt - FRESH_MARGIN_MS > Date.now()) return stored.accessToken;
+  if (!stored) throw new Error(t("sync.reauth"));
+  if (stored.expiresAt - FRESH_MARGIN_MS > Date.now())
+    return stored.accessToken;
   if (!stored.refreshToken) {
     await clearDriveTokens();
-    throw new Error(t('sync.reauth'));
+    throw new Error(t("sync.reauth"));
   }
   try {
     const refreshed = await AuthSession.refreshAsync(
@@ -23,7 +29,7 @@ export async function ensureAccessToken(): Promise<string> {
     );
     if (!refreshed.accessToken) {
       await clearDriveTokens();
-      throw new Error(t('sync.reauth'));
+      throw new Error(t("sync.reauth"));
     }
     const next = tokensFromAuth({
       accessToken: refreshed.accessToken,
@@ -35,6 +41,6 @@ export async function ensureAccessToken(): Promise<string> {
     return next.accessToken;
   } catch {
     await clearDriveTokens();
-    throw new Error(t('sync.reauth'));
+    throw new Error(t("sync.reauth"));
   }
 }

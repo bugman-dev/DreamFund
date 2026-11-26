@@ -1,6 +1,19 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { isPaletteId, palettes, type Palette, type PaletteId } from './palettes';
-import { loadTheme, saveTheme } from './storage';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import {
+  isPaletteId,
+  palettes,
+  type Palette,
+  type PaletteId,
+} from "./palettes";
+import { loadTheme, saveTheme } from "./storage";
 
 type ThemeValue = {
   id: PaletteId;
@@ -12,7 +25,7 @@ type ThemeValue = {
 const ThemeContext = createContext<ThemeValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [id, setId] = useState<PaletteId>('forest');
+  const [id, setId] = useState<PaletteId>("forest");
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -40,13 +53,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     [id, ready, setTheme],
   );
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  return (
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+  );
 }
 
 export function useTheme(): ThemeValue {
   const value = useContext(ThemeContext);
   if (!value) {
-    return { id: 'forest', colors: palettes.forest, ready: true, setTheme: () => undefined };
+    return {
+      id: "forest",
+      colors: palettes.forest,
+      ready: true,
+      setTheme: () => undefined,
+    };
   }
   return value;
 }

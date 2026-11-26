@@ -1,5 +1,5 @@
-import * as SQLite from 'expo-sqlite';
-import { DATABASE_NAME } from '../constants';
+import * as SQLite from "expo-sqlite";
+import { DATABASE_NAME } from "../constants";
 
 const SCHEMA = `
 PRAGMA journal_mode = WAL;

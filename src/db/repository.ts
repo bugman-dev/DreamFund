@@ -1,12 +1,18 @@
-import type { CurrencyId } from '../domain/money';
-import { createId } from '../domain/id';
-import type { BackupFile } from '../domain/backup';
-import { restoreBackup } from '../domain/backup';
-import type { Category } from '../domain/categories';
-import { deviceClock } from '../domain/clock';
-import { isIconName } from '../domain/icons';
-import { BACKUP_VERSION, CATEGORY_NAME_LIMIT, DEFAULT_REMINDER_HOUR, DEFAULT_REMINDER_MINUTE, FALLBACK_ICON } from '../constants';
-import { t } from '../locale/messages';
+import type { CurrencyId } from "../domain/money";
+import { createId } from "../domain/id";
+import type { BackupFile } from "../domain/backup";
+import { restoreBackup } from "../domain/backup";
+import type { Category } from "../domain/categories";
+import { deviceClock } from "../domain/clock";
+import { isIconName } from "../domain/icons";
+import {
+  BACKUP_VERSION,
+  CATEGORY_NAME_LIMIT,
+  DEFAULT_REMINDER_HOUR,
+  DEFAULT_REMINDER_MINUTE,
+  FALLBACK_ICON,
+} from "../constants";
+import { t } from "../locale/messages";
 import {
   applyAddition,
   applyEdit,
@@ -23,10 +29,10 @@ import {
   type LedgerState,
   type TxRecord,
   type TxSnapshot,
-} from '../domain/ledger';
-import type { Preferences } from '../domain/backup';
-import type { SessionUser } from '../auth/types';
-import { enqueue, getDatabase } from './database';
+} from "../domain/ledger";
+import type { Preferences } from "../domain/backup";
+import type { SessionUser } from "../auth/types";
+import { enqueue, getDatabase } from "./database";
 
 export type LoadedData = {
   categories: Category[];
@@ -50,13 +56,13 @@ type GoalRow = {
 
 type TxRow = {
   id: string;
-  type: TxRecord['type'];
+  type: TxRecord["type"];
   amount_paise: number;
   date: string;
   note: string;
   goal_id: string;
   counter_goal_id: string | null;
-  locked_reason: TxRecord['lockedReason'];
+  locked_reason: TxRecord["lockedReason"];
   created_at: string;
 };
 
@@ -89,7 +95,10 @@ export async function ensureUser(user: SessionUser): Promise<void> {
       user.sub,
       user.sub,
     );
-    await db.runAsync('UPDATE categories SET is_preset = 0 WHERE user_id = ? AND is_preset = 1', user.sub);
+    await db.runAsync(
+      "UPDATE categories SET is_preset = 0 WHERE user_id = ? AND is_preset = 1",
+      user.sub,
+    );
     await db.runAsync(
       `INSERT INTO preferences (user_id, reminder_enabled, reminder_hour, reminder_minute)
        VALUES (?, 0, ?, ?)
@@ -101,7 +110,10 @@ export async function ensureUser(user: SessionUser): Promise<void> {
   });
 }
 
-export async function loadAll(userId: string, currency: CurrencyId = 'inr'): Promise<LoadedData> {
+export async function loadAll(
+  userId: string,
+  currency: CurrencyId = "inr",
+): Promise<LoadedData> {
   return enqueue(async () => {
     const db = await getDatabase();
     const state = await readState(userId);
@@ -109,7 +121,13 @@ export async function loadAll(userId: string, currency: CurrencyId = 'inr'): Pro
     if (!projected.ok) throw new Error(projected.error);
     for (const goal of state.goals) {
       const amount = projected.allocated.get(goal.id) ?? 0;
-      await db.runAsync('UPDATE goals SET allocated_paise = ? WHERE id = ? AND user_id = ? AND allocated_paise != ?', amount, goal.id, userId, amount);
+      await db.runAsync(
+        "UPDATE goals SET allocated_paise = ? WHERE id = ? AND user_id = ? AND allocated_paise != ?",
+        amount,
+        goal.id,
+        userId,
+        amount,
+      );
     }
     return {
       categories: await readCategories(userId),
@@ -120,14 +138,23 @@ export async function loadAll(userId: string, currency: CurrencyId = 'inr'): Pro
   });
 }
 
-export async function createCategory(userId: string, name: string, icon: string): Promise<Category> {
+export async function createCategory(
+  userId: string,
+  name: string,
+  icon: string,
+): Promise<Category> {
   const trimmed = name.trim();
-  if (!trimmed || trimmed.length > CATEGORY_NAME_LIMIT) throw new Error(t('error.categoryName'));
-  if (!isIconName(icon)) throw new Error(t('error.chooseIcon'));
+  if (!trimmed || trimmed.length > CATEGORY_NAME_LIMIT)
+    throw new Error(t("error.categoryName"));
+  if (!isIconName(icon)) throw new Error(t("error.chooseIcon"));
   return enqueue(async () => {
     const categories = await readCategories(userId);
-    if (categories.some((category) => category.name.toLowerCase() === trimmed.toLowerCase())) {
-      throw new Error(t('error.categoryExists'));
+    if (
+      categories.some(
+        (category) => category.name.toLowerCase() === trimmed.toLowerCase(),
+      )
+    ) {
+      throw new Error(t("error.categoryExists"));
     }
     const category: Category = {
       id: createId(),
@@ -138,7 +165,7 @@ export async function createCategory(userId: string, name: string, icon: string)
     };
     const db = await getDatabase();
     await db.runAsync(
-      'INSERT INTO categories (id, user_id, name, icon, is_preset, sort_order) VALUES (?, ?, ?, ?, 0, ?)',
+      "INSERT INTO categories (id, user_id, name, icon, is_preset, sort_order) VALUES (?, ?, ?, ?, 0, ?)",
       category.id,
       userId,
       category.name,
@@ -149,47 +176,79 @@ export async function createCategory(userId: string, name: string, icon: string)
   });
 }
 
-export async function updateCategory(userId: string, id: string, name: string, icon: string): Promise<void> {
+export async function updateCategory(
+  userId: string,
+  id: string,
+  name: string,
+  icon: string,
+): Promise<void> {
   const trimmed = name.trim();
-  if (!trimmed || trimmed.length > CATEGORY_NAME_LIMIT) throw new Error(t('error.categoryName'));
-  if (!isIconName(icon)) throw new Error(t('error.chooseIcon'));
+  if (!trimmed || trimmed.length > CATEGORY_NAME_LIMIT)
+    throw new Error(t("error.categoryName"));
+  if (!isIconName(icon)) throw new Error(t("error.chooseIcon"));
   await enqueue(async () => {
     const categories = await readCategories(userId);
     const current = categories.find((category) => category.id === id);
-    if (!current) throw new Error(t('error.categoryMissing'));
-    if (categories.some((category) => category.id !== id && category.name.toLowerCase() === trimmed.toLowerCase())) {
-      throw new Error(t('error.categoryExists'));
+    if (!current) throw new Error(t("error.categoryMissing"));
+    if (
+      categories.some(
+        (category) =>
+          category.id !== id &&
+          category.name.toLowerCase() === trimmed.toLowerCase(),
+      )
+    ) {
+      throw new Error(t("error.categoryExists"));
     }
     const db = await getDatabase();
-    await db.runAsync('UPDATE categories SET name = ?, icon = ? WHERE id = ? AND user_id = ?', trimmed, icon, id, userId);
+    await db.runAsync(
+      "UPDATE categories SET name = ?, icon = ? WHERE id = ? AND user_id = ?",
+      trimmed,
+      icon,
+      id,
+      userId,
+    );
   });
 }
 
-export async function deleteCategory(userId: string, id: string): Promise<void> {
+export async function deleteCategory(
+  userId: string,
+  id: string,
+): Promise<void> {
   await enqueue(async () => {
     const categories = await readCategories(userId);
     const current = categories.find((category) => category.id === id);
-    if (!current) throw new Error(t('error.categoryMissing'));
+    if (!current) throw new Error(t("error.categoryMissing"));
     const state = await readState(userId);
     if (state.goals.some((goal) => goal.categoryId === id)) {
-      throw new Error(t('error.categoryInUse'));
+      throw new Error(t("error.categoryInUse"));
     }
     const db = await getDatabase();
-    await db.runAsync('DELETE FROM categories WHERE id = ? AND user_id = ?', id, userId);
+    await db.runAsync(
+      "DELETE FROM categories WHERE id = ? AND user_id = ?",
+      id,
+      userId,
+    );
   });
 }
 
 export async function createGoal(
   userId: string,
-  input: { name: string; categoryId: string; targetPaise: number; targetDate: string | null; imageUri: string | null },
-  currency: CurrencyId = 'inr',
+  input: {
+    name: string;
+    categoryId: string;
+    targetPaise: number;
+    targetDate: string | null;
+    imageUri: string | null;
+  },
+  currency: CurrencyId = "inr",
 ): Promise<string> {
   const invalid = validateGoalDraft(input, currency);
   if (invalid) throw new Error(invalid);
   const id = createId();
   await enqueue(async () => {
     const categories = await readCategories(userId);
-    if (!categories.some((category) => category.id === input.categoryId)) throw new Error(t('common.chooseCategory'));
+    if (!categories.some((category) => category.id === input.categoryId))
+      throw new Error(t("common.chooseCategory"));
     const db = await getDatabase();
     await db.runAsync(
       `INSERT INTO goals (
@@ -211,62 +270,120 @@ export async function createGoal(
 export async function updateGoal(
   userId: string,
   goalId: string,
-  patch: { name?: string; categoryId?: string; targetPaise?: number; targetDate?: string | null; imageUri?: string | null },
-  currency: CurrencyId = 'inr',
+  patch: {
+    name?: string;
+    categoryId?: string;
+    targetPaise?: number;
+    targetDate?: string | null;
+    imageUri?: string | null;
+  },
+  currency: CurrencyId = "inr",
 ): Promise<void> {
   if (patch.categoryId) {
     const categories = await readCategories(userId);
-    if (!categories.some((category) => category.id === patch.categoryId)) throw new Error(t('common.chooseCategory'));
+    if (!categories.some((category) => category.id === patch.categoryId))
+      throw new Error(t("common.chooseCategory"));
   }
-  await mutate(userId, (state) => applyGoalPatch(state, goalId, patch, currency), currency);
+  await mutate(
+    userId,
+    (state) => applyGoalPatch(state, goalId, patch, currency),
+    currency,
+  );
 }
 
-export async function deleteGoal(userId: string, goalId: string, currency: CurrencyId = 'inr'): Promise<void> {
+export async function deleteGoal(
+  userId: string,
+  goalId: string,
+  currency: CurrencyId = "inr",
+): Promise<void> {
   const categories = await readCategories(userId);
-  await mutate(userId, (state, clock) => {
-    const goal = state.goals.find((item) => item.id === goalId);
-    const category = categories.find((item) => item.id === goal?.categoryId);
-    return applyGoalDeletion(state, {
-      goalId,
-      categoryName: category?.name ?? goal?.categorySnapshot ?? t('present.category'),
-      categoryIcon: category?.icon ?? goal?.categoryIconSnapshot ?? FALLBACK_ICON,
-    }, clock, currency);
-  }, currency);
+  await mutate(
+    userId,
+    (state, clock) => {
+      const goal = state.goals.find((item) => item.id === goalId);
+      const category = categories.find((item) => item.id === goal?.categoryId);
+      return applyGoalDeletion(
+        state,
+        {
+          goalId,
+          categoryName:
+            category?.name ?? goal?.categorySnapshot ?? t("present.category"),
+          categoryIcon:
+            category?.icon ?? goal?.categoryIconSnapshot ?? FALLBACK_ICON,
+        },
+        clock,
+        currency,
+      );
+    },
+    currency,
+  );
 }
 
 export async function addMoney(
   userId: string,
   input: { goalId: string; amountPaise: number; date: string; note: string },
-  currency: CurrencyId = 'inr',
+  currency: CurrencyId = "inr",
 ): Promise<void> {
-  await mutate(userId, (state, clock) => applyAddition(state, input, clock, currency), currency);
+  await mutate(
+    userId,
+    (state, clock) => applyAddition(state, input, clock, currency),
+    currency,
+  );
 }
 
 export async function withdrawMoney(
   userId: string,
   input: { goalId: string; amountPaise: number; date: string; note: string },
-  currency: CurrencyId = 'inr',
+  currency: CurrencyId = "inr",
 ): Promise<void> {
-  await mutate(userId, (state, clock) => applyWithdrawal(state, input, clock, currency), currency);
+  await mutate(
+    userId,
+    (state, clock) => applyWithdrawal(state, input, clock, currency),
+    currency,
+  );
 }
 
 export async function transferMoney(
   userId: string,
-  input: { fromGoalId: string; toGoalId: string; amountPaise: number; date: string; note: string },
-  currency: CurrencyId = 'inr',
+  input: {
+    fromGoalId: string;
+    toGoalId: string;
+    amountPaise: number;
+    date: string;
+    note: string;
+  },
+  currency: CurrencyId = "inr",
 ): Promise<void> {
-  await mutate(userId, (state, clock) => applyTransfer(state, input, clock, currency), currency);
+  await mutate(
+    userId,
+    (state, clock) => applyTransfer(state, input, clock, currency),
+    currency,
+  );
 }
 
 export async function editTransaction(
   userId: string,
-  input: { transactionId: string; amountPaise?: number; date?: string; note?: string; goalId?: string; counterGoalId?: string | null },
-  currency: CurrencyId = 'inr',
+  input: {
+    transactionId: string;
+    amountPaise?: number;
+    date?: string;
+    note?: string;
+    goalId?: string;
+    counterGoalId?: string | null;
+  },
+  currency: CurrencyId = "inr",
 ): Promise<void> {
-  await mutate(userId, (state, clock) => applyEdit(state, input, clock, currency), currency);
+  await mutate(
+    userId,
+    (state, clock) => applyEdit(state, input, clock, currency),
+    currency,
+  );
 }
 
-export async function savePreferences(userId: string, preferences: Preferences): Promise<void> {
+export async function savePreferences(
+  userId: string,
+  preferences: Preferences,
+): Promise<void> {
   await enqueue(async () => {
     const db = await getDatabase();
     await db.runAsync(
@@ -297,7 +414,11 @@ export async function buildBackup(userId: string): Promise<BackupFile> {
   };
 }
 
-export async function importBackup(userId: string, raw: unknown, currency: CurrencyId = 'inr'): Promise<void> {
+export async function importBackup(
+  userId: string,
+  raw: unknown,
+  currency: CurrencyId = "inr",
+): Promise<void> {
   const restored = restoreBackup(raw, deviceClock(), currency);
   if (!restored.ok) throw new Error(restored.error);
   const projected = replayLedger(restored.data.state, currency);
@@ -305,13 +426,13 @@ export async function importBackup(userId: string, raw: unknown, currency: Curre
   await enqueue(async () => {
     const db = await getDatabase();
     await db.withTransactionAsync(async () => {
-      await db.runAsync('DELETE FROM audits WHERE user_id = ?', userId);
-      await db.runAsync('DELETE FROM transactions WHERE user_id = ?', userId);
-      await db.runAsync('DELETE FROM goals WHERE user_id = ?', userId);
-      await db.runAsync('DELETE FROM categories WHERE user_id = ?', userId);
+      await db.runAsync("DELETE FROM audits WHERE user_id = ?", userId);
+      await db.runAsync("DELETE FROM transactions WHERE user_id = ?", userId);
+      await db.runAsync("DELETE FROM goals WHERE user_id = ?", userId);
+      await db.runAsync("DELETE FROM categories WHERE user_id = ?", userId);
       for (const category of restored.data.categories) {
         await db.runAsync(
-          'INSERT INTO categories (id, user_id, name, icon, is_preset, sort_order) VALUES (?, ?, ?, ?, 0, ?)',
+          "INSERT INTO categories (id, user_id, name, icon, is_preset, sort_order) VALUES (?, ?, ?, ?, 0, ?)",
           category.id,
           userId,
           category.name,
@@ -357,8 +478,11 @@ export async function importBackup(userId: string, raw: unknown, currency: Curre
 
 async function mutate(
   userId: string,
-  recipe: (state: LedgerState, clock: ReturnType<typeof deviceClock>) => LedgerResult,
-  currency: CurrencyId = 'inr',
+  recipe: (
+    state: LedgerState,
+    clock: ReturnType<typeof deviceClock>,
+  ) => LedgerResult,
+  currency: CurrencyId = "inr",
 ): Promise<void> {
   await enqueue(async () => {
     const db = await getDatabase();
@@ -369,16 +493,21 @@ async function mutate(
       if (!result.ok) throw new Error(result.error);
       const projected = replayLedger(result.state, currency);
       if (!projected.ok) throw new Error(projected.error);
-      if (reconciliationError(result.state, projected.allocated)) throw new Error(t('error.reconcile'));
+      if (reconciliationError(result.state, projected.allocated))
+        throw new Error(t("error.reconcile"));
       await writeGoals(userId, result.state, projected.allocated);
-      await db.runAsync('DELETE FROM audits WHERE user_id = ?', userId);
-      await db.runAsync('DELETE FROM transactions WHERE user_id = ?', userId);
+      await db.runAsync("DELETE FROM audits WHERE user_id = ?", userId);
+      await db.runAsync("DELETE FROM transactions WHERE user_id = ?", userId);
       await insertTransactions(userId, result.state);
     });
   });
 }
 
-async function writeGoals(userId: string, state: LedgerState, allocated: Map<string, number>): Promise<void> {
+async function writeGoals(
+  userId: string,
+  state: LedgerState,
+  allocated: Map<string, number>,
+): Promise<void> {
   const db = await getDatabase();
   for (const goal of state.goals) {
     const result = await db.runAsync(
@@ -398,11 +527,14 @@ async function writeGoals(userId: string, state: LedgerState, allocated: Map<str
       goal.id,
       userId,
     );
-    if (result.changes === 0) throw new Error(t('error.goalSave'));
+    if (result.changes === 0) throw new Error(t("error.goalSave"));
   }
 }
 
-async function insertTransactions(userId: string, state: LedgerState): Promise<void> {
+async function insertTransactions(
+  userId: string,
+  state: LedgerState,
+): Promise<void> {
   const db = await getDatabase();
   for (const tx of state.transactions) {
     await db.runAsync(
@@ -423,7 +555,7 @@ async function insertTransactions(userId: string, state: LedgerState): Promise<v
   }
   for (const audit of state.audits) {
     await db.runAsync(
-      'INSERT INTO audits (id, user_id, transaction_id, previous_json, updated_json, edited_at) VALUES (?, ?, ?, ?, ?, ?)',
+      "INSERT INTO audits (id, user_id, transaction_id, previous_json, updated_json, edited_at) VALUES (?, ?, ?, ?, ?, ?)",
       audit.id,
       userId,
       audit.transactionId,
@@ -436,9 +568,18 @@ async function insertTransactions(userId: string, state: LedgerState): Promise<v
 
 async function readState(userId: string): Promise<LedgerState> {
   const db = await getDatabase();
-  const goalRows = await db.getAllAsync<GoalRow>('SELECT * FROM goals WHERE user_id = ? ORDER BY created_at DESC', userId);
-  const txRows = await db.getAllAsync<TxRow>('SELECT * FROM transactions WHERE user_id = ?', userId);
-  const auditRows = await db.getAllAsync<AuditRow>('SELECT * FROM audits WHERE user_id = ? ORDER BY edited_at ASC', userId);
+  const goalRows = await db.getAllAsync<GoalRow>(
+    "SELECT * FROM goals WHERE user_id = ? ORDER BY created_at DESC",
+    userId,
+  );
+  const txRows = await db.getAllAsync<TxRow>(
+    "SELECT * FROM transactions WHERE user_id = ?",
+    userId,
+  );
+  const auditRows = await db.getAllAsync<AuditRow>(
+    "SELECT * FROM audits WHERE user_id = ? ORDER BY edited_at ASC",
+    userId,
+  );
   return {
     goals: goalRows.map(mapGoal),
     transactions: txRows.map(mapTx),
@@ -448,8 +589,14 @@ async function readState(userId: string): Promise<LedgerState> {
 
 async function readCategories(userId: string): Promise<Category[]> {
   const db = await getDatabase();
-  const rows = await db.getAllAsync<{ id: string; name: string; icon: string; is_preset: number; sort_order: number }>(
-    'SELECT id, name, icon, is_preset, sort_order FROM categories WHERE user_id = ? ORDER BY sort_order ASC',
+  const rows = await db.getAllAsync<{
+    id: string;
+    name: string;
+    icon: string;
+    is_preset: number;
+    sort_order: number;
+  }>(
+    "SELECT id, name, icon, is_preset, sort_order FROM categories WHERE user_id = ? ORDER BY sort_order ASC",
     userId,
   );
   return rows.map((row) => ({
@@ -463,8 +610,12 @@ async function readCategories(userId: string): Promise<Category[]> {
 
 async function readPreferences(userId: string): Promise<Preferences> {
   const db = await getDatabase();
-  const row = await db.getFirstAsync<{ reminder_enabled: number; reminder_hour: number; reminder_minute: number }>(
-    'SELECT reminder_enabled, reminder_hour, reminder_minute FROM preferences WHERE user_id = ?',
+  const row = await db.getFirstAsync<{
+    reminder_enabled: number;
+    reminder_hour: number;
+    reminder_minute: number;
+  }>(
+    "SELECT reminder_enabled, reminder_hour, reminder_minute FROM preferences WHERE user_id = ?",
     userId,
   );
   return {

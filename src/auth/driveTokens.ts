@@ -1,5 +1,9 @@
-import { DRIVE_TOKENS_KEY } from '../constants';
-import { readDeviceValue, removeDeviceValue, writeDeviceValue } from '../storage/deviceValue';
+import { DRIVE_TOKENS_KEY } from "../constants";
+import {
+  readDeviceValue,
+  removeDeviceValue,
+  writeDeviceValue,
+} from "../storage/deviceValue";
 
 export type DriveTokens = {
   accessToken: string;
@@ -12,10 +16,12 @@ export async function loadDriveTokens(): Promise<DriveTokens | null> {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as DriveTokens;
-    if (!parsed.accessToken || typeof parsed.expiresAt !== 'number') return null;
+    if (!parsed.accessToken || typeof parsed.expiresAt !== "number")
+      return null;
     return {
       accessToken: parsed.accessToken,
-      refreshToken: typeof parsed.refreshToken === 'string' ? parsed.refreshToken : null,
+      refreshToken:
+        typeof parsed.refreshToken === "string" ? parsed.refreshToken : null,
       expiresAt: parsed.expiresAt,
     };
   } catch {
@@ -37,7 +43,8 @@ export function tokensFromAuth(input: {
   expiresIn?: number | null;
   existingRefresh?: string | null;
 }): DriveTokens {
-  const expiresIn = input.expiresIn && input.expiresIn > 0 ? input.expiresIn : 3600;
+  const expiresIn =
+    input.expiresIn && input.expiresIn > 0 ? input.expiresIn : 3600;
   return {
     accessToken: input.accessToken,
     refreshToken: input.refreshToken || input.existingRefresh || null,

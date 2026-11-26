@@ -1,17 +1,25 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { Redirect, useRouter } from 'expo-router';
-import { ArrowRight } from 'lucide-react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useSession } from '../src/auth/session';
-import { WelcomeHills } from '../src/components/WelcomeJourneyArt';
-import { firstName } from '../src/domain/dates';
-import { useText } from '../src/locale';
-import type { Palette } from '../src/theme/palettes';
-import { useColors } from '../src/theme/Theme';
-import { fonts } from '../src/theme/type';
+import { useEffect, useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import { Redirect, useRouter } from "expo-router";
+import { ArrowRight } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useSession } from "../src/auth/session";
+import { WelcomeHills } from "../src/components/WelcomeJourneyArt";
+import { firstName } from "../src/domain/dates";
+import { useText } from "../src/locale";
+import type { Palette } from "../src/theme/palettes";
+import { useColors } from "../src/theme/Theme";
+import { fonts } from "../src/theme/type";
 
-const APP_ICON = require('../assets/icon.png');
+const APP_ICON = require("../assets/icon.png");
 
 /** Google OAuth returns to `…:/oauthredirect`; greet the user, then continue into the app. */
 export default function OAuthRedirectScreen() {
@@ -33,39 +41,56 @@ export default function OAuthRedirectScreen() {
   if (ready && !user && timedOut) return <Redirect href="/welcome" />;
 
   const waiting = !ready || !user;
-  const name = user ? firstName(user.name) : '';
+  const name = user ? firstName(user.name) : "";
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top + 28, paddingBottom: Math.max(insets.bottom, 20) + 96 }]}>
+    <View
+      style={[
+        styles.screen,
+        {
+          paddingTop: insets.top + 28,
+          paddingBottom: Math.max(insets.bottom, 20) + 96,
+        },
+      ]}
+    >
       <WelcomeHills width={width} height={180} />
       {waiting ? (
         <View style={styles.content}>
           <ActivityIndicator size="large" color={colors.forest} />
-          <Text style={styles.loading}>{text('oauth.loading')}</Text>
+          <Text style={styles.loading}>{text("oauth.loading")}</Text>
         </View>
       ) : (
         <>
           <View style={styles.content}>
-            <Image source={APP_ICON} style={styles.icon} accessibilityIgnoresInvertColors />
+            <Image
+              source={APP_ICON}
+              style={styles.icon}
+              accessibilityIgnoresInvertColors
+            />
             <View style={styles.copy}>
               <View style={styles.titleRow}>
-                <Text style={styles.title}>{text('oauth.welcome', { name })}</Text>
+                <Text style={styles.title}>
+                  {text("oauth.welcome", { name })}
+                </Text>
                 <View style={styles.sparkles} pointerEvents="none">
                   <View style={[styles.spark, styles.sparkA]} />
                   <View style={[styles.spark, styles.sparkB]} />
                   <View style={[styles.spark, styles.sparkC]} />
                 </View>
               </View>
-              <Text style={styles.body}>{text('oauth.body')}</Text>
+              <Text style={styles.body}>{text("oauth.body")}</Text>
             </View>
           </View>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={text('oauth.continue')}
-            onPress={() => router.replace('/(tabs)')}
-            style={({ pressed }) => [styles.continue, pressed && styles.continuePressed]}
+            accessibilityLabel={text("oauth.continue")}
+            onPress={() => router.replace("/(tabs)")}
+            style={({ pressed }) => [
+              styles.continue,
+              pressed && styles.continuePressed,
+            ]}
           >
-            <Text style={styles.continueLabel}>{text('oauth.continue')}</Text>
+            <Text style={styles.continueLabel}>{text("oauth.continue")}</Text>
             <ArrowRight color={colors.onForest} size={20} strokeWidth={2.4} />
           </Pressable>
         </>
@@ -80,12 +105,12 @@ function createStyles(colors: Palette) {
       flex: 1,
       backgroundColor: colors.ivory,
       paddingHorizontal: 28,
-      justifyContent: 'space-between',
+      justifyContent: "space-between",
     },
     content: {
       flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
       gap: 28,
       paddingBottom: 48,
     },
@@ -93,7 +118,7 @@ function createStyles(colors: Palette) {
       fontFamily: fonts.medium,
       fontSize: 17,
       color: colors.muted,
-      textAlign: 'center',
+      textAlign: "center",
     },
     icon: {
       width: 168,
@@ -101,13 +126,13 @@ function createStyles(colors: Palette) {
       borderRadius: 36,
     },
     copy: {
-      alignItems: 'center',
+      alignItems: "center",
       gap: 12,
       paddingHorizontal: 8,
     },
     titleRow: {
-      position: 'relative',
-      alignItems: 'center',
+      position: "relative",
+      alignItems: "center",
       paddingRight: 10,
     },
     title: {
@@ -115,41 +140,59 @@ function createStyles(colors: Palette) {
       fontSize: 34,
       lineHeight: 42,
       color: colors.forest,
-      textAlign: 'center',
+      textAlign: "center",
     },
     sparkles: {
-      position: 'absolute',
+      position: "absolute",
       right: -6,
       top: 2,
       width: 22,
       height: 22,
     },
     spark: {
-      position: 'absolute',
+      position: "absolute",
       backgroundColor: colors.amber,
       borderRadius: 2,
     },
-    sparkA: { width: 10, height: 2.5, right: 0, top: 4, transform: [{ rotate: '-28deg' }] },
-    sparkB: { width: 7, height: 2.5, right: 8, top: 0, transform: [{ rotate: '8deg' }] },
-    sparkC: { width: 8, height: 2.5, right: 2, top: 11, transform: [{ rotate: '38deg' }] },
+    sparkA: {
+      width: 10,
+      height: 2.5,
+      right: 0,
+      top: 4,
+      transform: [{ rotate: "-28deg" }],
+    },
+    sparkB: {
+      width: 7,
+      height: 2.5,
+      right: 8,
+      top: 0,
+      transform: [{ rotate: "8deg" }],
+    },
+    sparkC: {
+      width: 8,
+      height: 2.5,
+      right: 2,
+      top: 11,
+      transform: [{ rotate: "38deg" }],
+    },
     body: {
       fontFamily: fonts.regular,
       fontSize: 16,
       lineHeight: 24,
       color: colors.muted,
-      textAlign: 'center',
+      textAlign: "center",
       maxWidth: 280,
     },
     continue: {
-      alignSelf: 'center',
+      alignSelf: "center",
       minWidth: 200,
       minHeight: 56,
       paddingHorizontal: 28,
       borderRadius: 999,
       backgroundColor: colors.forest,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
       gap: 10,
       zIndex: 1,
     },

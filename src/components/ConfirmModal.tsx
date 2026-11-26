@@ -1,17 +1,17 @@
-import { useMemo } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useText } from '../locale';
-import type { Palette } from '../theme/palettes';
-import { useColors } from '../theme/Theme';
-import { fonts } from '../theme/type';
-import { Button } from './ui';
+import { useMemo } from "react";
+import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useText } from "../locale";
+import type { Palette } from "../theme/palettes";
+import { useColors } from "../theme/Theme";
+import { fonts } from "../theme/type";
+import { Button } from "./ui";
 
 export function ConfirmModal({
   visible,
   title,
   message,
   confirmLabel,
-  tone = 'primary',
+  tone = "primary",
   busy = false,
   showCancel = true,
   onConfirm,
@@ -23,7 +23,7 @@ export function ConfirmModal({
   title: string;
   message: string;
   confirmLabel: string;
-  tone?: 'primary' | 'danger';
+  tone?: "primary" | "danger";
   busy?: boolean;
   showCancel?: boolean;
   onConfirm: () => void;
@@ -35,7 +35,12 @@ export function ConfirmModal({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onCancel}
+    >
       <Pressable style={styles.backdrop} onPress={busy ? undefined : onCancel}>
         <Pressable style={styles.card} onPress={() => undefined}>
           <Text style={styles.title}>{title}</Text>
@@ -43,16 +48,31 @@ export function ConfirmModal({
           <View style={[styles.actions, altLabel ? styles.actionsWrap : null]}>
             {showCancel ? (
               <View style={styles.action}>
-                <Button label={text('common.cancel')} tone="ghost" onPress={onCancel} disabled={busy} />
+                <Button
+                  label={text("common.cancel")}
+                  tone="ghost"
+                  onPress={onCancel}
+                  disabled={busy}
+                />
               </View>
             ) : null}
             {altLabel && onAlt ? (
               <View style={styles.action}>
-                <Button label={altLabel} tone="ghost" onPress={onAlt} disabled={busy} />
+                <Button
+                  label={altLabel}
+                  tone="ghost"
+                  onPress={onAlt}
+                  disabled={busy}
+                />
               </View>
             ) : null}
             <View style={styles.action}>
-              <Button label={confirmLabel} tone={tone} onPress={onConfirm} disabled={busy} />
+              <Button
+                label={confirmLabel}
+                tone={tone}
+                onPress={onConfirm}
+                disabled={busy}
+              />
             </View>
           </View>
         </Pressable>
@@ -63,12 +83,24 @@ export function ConfirmModal({
 
 function createStyles(colors: Palette) {
   return StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(30, 40, 35, 0.4)', justifyContent: 'center', padding: 24 },
-  card: { backgroundColor: colors.white, borderRadius: 12, padding: 20 },
-  title: { fontFamily: fonts.semibold, fontSize: 20, color: colors.ink },
-  message: { fontFamily: fonts.regular, fontSize: 15, color: colors.muted, lineHeight: 22, marginTop: 8, marginBottom: 18 },
-  actions: { flexDirection: 'row', gap: 10 },
-  actionsWrap: { flexWrap: 'wrap' },
-  action: { flex: 1, minWidth: 100 },
+    backdrop: {
+      flex: 1,
+      backgroundColor: "rgba(30, 40, 35, 0.4)",
+      justifyContent: "center",
+      padding: 24,
+    },
+    card: { backgroundColor: colors.white, borderRadius: 12, padding: 20 },
+    title: { fontFamily: fonts.semibold, fontSize: 20, color: colors.ink },
+    message: {
+      fontFamily: fonts.regular,
+      fontSize: 15,
+      color: colors.muted,
+      lineHeight: 22,
+      marginTop: 8,
+      marginBottom: 18,
+    },
+    actions: { flexDirection: "row", gap: 10 },
+    actionsWrap: { flexWrap: "wrap" },
+    action: { flex: 1, minWidth: 100 },
   });
 }

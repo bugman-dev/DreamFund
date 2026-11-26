@@ -1,6 +1,10 @@
-import { SESSION_KEY } from '../constants';
-import { readDeviceValue, removeDeviceValue, writeDeviceValue } from '../storage/deviceValue';
-import type { SessionUser } from './types';
+import { SESSION_KEY } from "../constants";
+import {
+  readDeviceValue,
+  removeDeviceValue,
+  writeDeviceValue,
+} from "../storage/deviceValue";
+import type { SessionUser } from "./types";
 
 export async function loadSession(): Promise<SessionUser | null> {
   const raw = await readDeviceValue(SESSION_KEY);

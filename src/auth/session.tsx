@@ -1,9 +1,16 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { PREVIEW_USER } from '../constants';
-import { t } from '../locale/messages';
-import { clearDriveTokens } from './driveTokens';
-import { clearSession, loadSession, saveSession } from './storage';
-import type { SessionUser } from './types';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import { PREVIEW_USER } from "../constants";
+import { t } from "../locale/messages";
+import { clearDriveTokens } from "./driveTokens";
+import { clearSession, loadSession, saveSession } from "./storage";
+import type { SessionUser } from "./types";
 
 type SessionValue = {
   user: SessionUser | null;
@@ -50,11 +57,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [ready, user],
   );
 
-  return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
+  return (
+    <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
+  );
 }
 
 export function useSession(): SessionValue {
   const value = useContext(SessionContext);
-  if (!value) throw new Error(t('auth.unavailable'));
+  if (!value) throw new Error(t("auth.unavailable"));
   return value;
 }

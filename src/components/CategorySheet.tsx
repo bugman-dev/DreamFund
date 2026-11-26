@@ -1,14 +1,28 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { Check, ChevronDown, ChevronRight, Search, X } from 'lucide-react-native';
-import { useData } from '../data/store';
-import { useText } from '../locale';
-import type { Palette } from '../theme/palettes';
-import { useColors } from '../theme/Theme';
-import { fonts } from '../theme/type';
-import { CategoryDraftFields } from './CategoryDraftFields';
-import { AppIcon } from './icons';
-import { Button } from './ui';
+import { useEffect, useMemo, useState } from "react";
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Search,
+  X,
+} from "lucide-react-native";
+import { useData } from "../data/store";
+import { useText } from "../locale";
+import type { Palette } from "../theme/palettes";
+import { useColors } from "../theme/Theme";
+import { fonts } from "../theme/type";
+import { CategoryDraftFields } from "./CategoryDraftFields";
+import { AppIcon } from "./icons";
+import { Button } from "./ui";
 
 export function CategorySheet({
   visible,
@@ -25,10 +39,10 @@ export function CategorySheet({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const text = useText();
   const data = useData();
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [adding, setAdding] = useState(false);
-  const [name, setName] = useState('');
-  const [icon, setIcon] = useState<string>('Heart');
+  const [name, setName] = useState("");
+  const [icon, setIcon] = useState<string>("Heart");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -36,7 +50,10 @@ export function CategorySheet({
     if (visible) setAdding(false);
   }, [visible]);
   const categories = useMemo(
-    () => data.categories.filter((category) => category.name.toLowerCase().includes(query.trim().toLowerCase())),
+    () =>
+      data.categories.filter((category) =>
+        category.name.toLowerCase().includes(query.trim().toLowerCase()),
+      ),
     [data.categories, query],
   );
 
@@ -45,10 +62,14 @@ export function CategorySheet({
     setError(null);
     try {
       const created = await data.createCategory(name, icon);
-      setName('');
+      setName("");
       onSelect(created.id);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : text('category.createFailed'));
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : text("category.createFailed"),
+      );
     } finally {
       setSaving(false);
     }
@@ -58,10 +79,15 @@ export function CategorySheet({
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.screen}>
         <View style={styles.header}>
-          <Pressable accessibilityRole="button" accessibilityLabel={text('common.close')} onPress={onClose} style={styles.iconButton}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={text("common.close")}
+            onPress={onClose}
+            style={styles.iconButton}
+          >
             <X color={colors.ink} size={22} />
           </Pressable>
-          <Text style={styles.title}>{text('category.select')}</Text>
+          <Text style={styles.title}>{text("category.select")}</Text>
           <View style={styles.iconButton} />
         </View>
         <View style={styles.search}>
@@ -69,34 +95,70 @@ export function CategorySheet({
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder={text('category.search')}
+            placeholder={text("category.search")}
             placeholderTextColor={colors.muted}
             style={styles.searchInput}
           />
         </View>
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
-          {categories.length === 0 ? <Text style={styles.empty}>{text('category.empty')}</Text> : null}
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.content}
+        >
+          {categories.length === 0 ? (
+            <Text style={styles.empty}>{text("category.empty")}</Text>
+          ) : null}
           {categories.map((category) => {
             const selected = category.id === selectedId;
             return (
-              <Pressable key={category.id} accessibilityRole="button" onPress={() => onSelect(category.id)} style={styles.row}>
+              <Pressable
+                key={category.id}
+                accessibilityRole="button"
+                onPress={() => onSelect(category.id)}
+                style={styles.row}
+              >
                 <View style={styles.iconTile}>
-                  <AppIcon name={category.icon} size={18} color={colors.forest} />
+                  <AppIcon
+                    name={category.icon}
+                    size={18}
+                    color={colors.forest}
+                  />
                 </View>
                 <Text style={styles.name}>{category.name}</Text>
                 {selected ? <Check color={colors.forest} size={18} /> : null}
               </Pressable>
             );
           })}
-          <Pressable accessibilityRole="button" onPress={() => setAdding((open) => !open)} style={styles.addHeader}>
-            <Text style={styles.addTitle}>{text('category.addTitle')}</Text>
-            {adding ? <ChevronDown color={colors.ink} size={18} /> : <ChevronRight color={colors.ink} size={18} />}
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setAdding((open) => !open)}
+            style={styles.addHeader}
+          >
+            <Text style={styles.addTitle}>{text("category.addTitle")}</Text>
+            {adding ? (
+              <ChevronDown color={colors.ink} size={18} />
+            ) : (
+              <ChevronRight color={colors.ink} size={18} />
+            )}
           </Pressable>
           {adding ? (
             <>
-              <CategoryDraftFields name={name} onChangeName={setName} icon={icon} onChangeIcon={setIcon} error={error} />
+              <CategoryDraftFields
+                name={name}
+                onChangeName={setName}
+                icon={icon}
+                onChangeIcon={setIcon}
+                error={error}
+              />
               <View style={styles.addAction}>
-                <Button label={name.trim() ? text('category.addNamed', { name: name.trim() }) : text('categories.add')} onPress={addCategory} disabled={saving || !name.trim()} />
+                <Button
+                  label={
+                    name.trim()
+                      ? text("category.addNamed", { name: name.trim() })
+                      : text("categories.add")
+                  }
+                  onPress={addCategory}
+                  disabled={saving || !name.trim()}
+                />
               </View>
             </>
           ) : null}
@@ -108,31 +170,80 @@ export function CategorySheet({
 
 function createStyles(colors: Palette) {
   return StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.ivory, paddingTop: 18 },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12 },
-  iconButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  title: { flex: 1, textAlign: 'center', fontFamily: fonts.semibold, fontSize: 18, color: colors.ink },
-  search: {
-    margin: 20,
-    marginBottom: 8,
-    backgroundColor: colors.white,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.grey,
-    minHeight: 48,
-    paddingHorizontal: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  searchInput: { flex: 1, fontFamily: fonts.regular, fontSize: 15, color: colors.ink, paddingVertical: 10 },
-  content: { paddingHorizontal: 20, paddingBottom: 32 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
-  iconTile: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.paleSage, alignItems: 'center', justifyContent: 'center' },
-  name: { flex: 1, fontFamily: fonts.medium, fontSize: 16, color: colors.ink },
-  empty: { fontFamily: fonts.regular, fontSize: 15, color: colors.muted, paddingVertical: 12 },
-  addHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 18, marginBottom: 10 },
-  addTitle: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ink },
-  addAction: { marginTop: 16 },
+    screen: { flex: 1, backgroundColor: colors.ivory, paddingTop: 18 },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 12,
+    },
+    iconButton: {
+      width: 44,
+      height: 44,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    title: {
+      flex: 1,
+      textAlign: "center",
+      fontFamily: fonts.semibold,
+      fontSize: 18,
+      color: colors.ink,
+    },
+    search: {
+      margin: 20,
+      marginBottom: 8,
+      backgroundColor: colors.white,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.grey,
+      minHeight: 48,
+      paddingHorizontal: 12,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
+    searchInput: {
+      flex: 1,
+      fontFamily: fonts.regular,
+      fontSize: 15,
+      color: colors.ink,
+      paddingVertical: 10,
+    },
+    content: { paddingHorizontal: 20, paddingBottom: 32 },
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      paddingVertical: 10,
+    },
+    iconTile: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: colors.paleSage,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    name: {
+      flex: 1,
+      fontFamily: fonts.medium,
+      fontSize: 16,
+      color: colors.ink,
+    },
+    empty: {
+      fontFamily: fonts.regular,
+      fontSize: 15,
+      color: colors.muted,
+      paddingVertical: 12,
+    },
+    addHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginTop: 18,
+      marginBottom: 10,
+    },
+    addTitle: { fontFamily: fonts.semibold, fontSize: 16, color: colors.ink },
+    addAction: { marginTop: 16 },
   });
 }
